@@ -61,7 +61,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
 
       if (signInError) {
-        // Try to sign up
+        // Try to sign up — triggers auto-create profile & roles
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -71,26 +71,21 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (signUpError) throw signUpError;
         if (signUpData.user) {
           setUserId(signUpData.user.id);
-          // Create profile
-          await supabase.from("profiles").insert({
-            user_id: signUpData.user.id,
-            wallet_address: walletAddr.toLowerCase(),
-            display_name: `${walletAddr.slice(0, 6)}...${walletAddr.slice(-4)}`,
-          });
-          // Assign buyer role by default
-          // Note: First user might need admin role set manually
         }
       } else if (signInData.user) {
         setUserId(signInData.user.id);
       }
 
-      // Fetch roles
+      // Fetch roles (small delay to let triggers complete)
+      await new Promise(r => setTimeout(r, 500));
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
+        const uid = session.session.user.id;
+        setUserId(uid);
         const { data: roles } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", session.session.user.id);
+          .eq("user_id", uid);
         setUserRoles(roles?.map((r: any) => r.role) || []);
       }
     } catch (err) {

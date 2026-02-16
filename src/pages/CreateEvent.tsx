@@ -183,20 +183,20 @@ const CreateEvent = () => {
                 </div>
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs">Tier Name</Label>
-                    <Input value={tier.tier_name} onChange={(e) => updateTier(i, "tier_name", e.target.value)} placeholder="VIP" className="mt-1" />
+                    <Label className="text-xs text-muted-foreground">Tier Name</Label>
+                    <Input value={tier.tier_name} onChange={(e) => updateTier(i, "tier_name", e.target.value)} placeholder="e.g. VIP, General" className="mt-1" />
                   </div>
                   <div>
-                    <Label className="text-xs">Price (ETH)</Label>
-                    <Input type="number" value={tier.price} onChange={(e) => updateTier(i, "price", e.target.value)} step="0.001" className="mt-1" />
+                    <Label className="text-xs text-muted-foreground">Price (ETH)</Label>
+                    <Input type="number" value={tier.price} onChange={(e) => updateTier(i, "price", e.target.value)} step="0.001" min="0" placeholder="0.01" className="mt-1" />
                   </div>
                   <div>
-                    <Label className="text-xs">Total Supply</Label>
-                    <Input type="number" value={tier.total_supply} onChange={(e) => updateTier(i, "total_supply", e.target.value)} className="mt-1" />
+                    <Label className="text-xs text-muted-foreground">Total Supply</Label>
+                    <Input type="number" value={tier.total_supply} onChange={(e) => updateTier(i, "total_supply", e.target.value)} min="1" placeholder="100" className="mt-1" />
                   </div>
                   <div>
-                    <Label className="text-xs">Max Per Wallet</Label>
-                    <Input type="number" value={tier.max_per_wallet} onChange={(e) => updateTier(i, "max_per_wallet", e.target.value)} className="mt-1" />
+                    <Label className="text-xs text-muted-foreground">Max Per Wallet</Label>
+                    <Input type="number" value={tier.max_per_wallet} onChange={(e) => updateTier(i, "max_per_wallet", e.target.value)} min="1" placeholder="4" className="mt-1" />
                   </div>
                 </div>
               </div>

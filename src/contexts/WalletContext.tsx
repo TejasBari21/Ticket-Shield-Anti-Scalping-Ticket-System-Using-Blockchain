@@ -49,39 +49,36 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const syncWithSupabase = useCallback(async (walletAddr: string) => {
     try {
-      // Sign in anonymously or with a custom method
-      // For demo, we use the wallet address as email workaround
-      const email = `${walletAddr.toLowerCase()}@blocktix.wallet`;
-      const password = walletAddr.toLowerCase(); // Simplified for demo
+      const normalizedAddr = walletAddr.toLowerCase();
 
-      // Try to sign in first
-      let { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Check if we already have a session
+      const { data: existingSession } = await supabase.auth.getSession();
 
-      if (signInError) {
-        // Try to sign up — triggers auto-create profile & roles
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { wallet_address: walletAddr.toLowerCase() } },
+      if (!existingSession?.session) {
+        // Sign in anonymously — this always succeeds and creates an auth.users row
+        const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously({
+          options: { data: { wallet_address: normalizedAddr } },
         });
-
-        if (signUpError) throw signUpError;
-        if (signUpData.user) {
-          setUserId(signUpData.user.id);
+        if (anonError) throw anonError;
+        if (anonData.user) {
+          setUserId(anonData.user.id);
         }
-      } else if (signInData.user) {
-        setUserId(signInData.user.id);
       }
 
-      // Fetch roles (small delay to let triggers complete)
-      await new Promise(r => setTimeout(r, 500));
+      // Small delay to let database triggers complete (role + profile creation)
+      await new Promise(r => setTimeout(r, 800));
+
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
         const uid = session.session.user.id;
         setUserId(uid);
+
+        // Ensure profile exists with wallet address
+        await supabase.from("profiles").upsert(
+          { user_id: uid, wallet_address: normalizedAddr, display_name: `${normalizedAddr.slice(0, 6)}...${normalizedAddr.slice(-4)}` },
+          { onConflict: "user_id" }
+        );
+
         const { data: roles } = await supabase
           .from("user_roles")
           .select("role")

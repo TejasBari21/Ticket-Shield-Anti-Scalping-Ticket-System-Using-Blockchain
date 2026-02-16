@@ -50,35 +50,55 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const syncWithSupabase = useCallback(async (walletAddr: string) => {
     try {
       const normalizedAddr = walletAddr.toLowerCase();
+      // Use a valid email format for Supabase auth
+      const email = `${normalizedAddr}@wallet.blocktix.com`;
+      const password = `bx_${normalizedAddr}_secure`;
 
-      // Check if we already have a session
-      const { data: existingSession } = await supabase.auth.getSession();
+      // Try to sign in first
+      let { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (!existingSession?.session) {
-        // Sign in anonymously — this always succeeds and creates an auth.users row
-        const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously({
-          options: { data: { wallet_address: normalizedAddr } },
+      if (signInError) {
+        // Try to sign up — triggers auto-create profile & roles
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { wallet_address: normalizedAddr },
+          },
         });
-        if (anonError) throw anonError;
-        if (anonData.user) {
-          setUserId(anonData.user.id);
+
+        if (signUpError) throw signUpError;
+
+        // If email confirmation is required, the session may be null
+        // Try signing in immediately after signup
+        if (!signUpData.session) {
+          const { data: retrySignIn, error: retryError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (retryError) {
+            console.warn("Sign-in after signup failed (email confirmation may be required):", retryError.message);
+          }
+          if (retrySignIn?.user) {
+            setUserId(retrySignIn.user.id);
+          }
+        } else if (signUpData.user) {
+          setUserId(signUpData.user.id);
         }
+      } else if (signInData.user) {
+        setUserId(signInData.user.id);
       }
 
-      // Small delay to let database triggers complete (role + profile creation)
+      // Small delay to let database triggers complete
       await new Promise(r => setTimeout(r, 800));
 
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
         const uid = session.session.user.id;
         setUserId(uid);
-
-        // Ensure profile exists with wallet address
-        await supabase.from("profiles").upsert(
-          { user_id: uid, wallet_address: normalizedAddr, display_name: `${normalizedAddr.slice(0, 6)}...${normalizedAddr.slice(-4)}` },
-          { onConflict: "user_id" }
-        );
-
         const { data: roles } = await supabase
           .from("user_roles")
           .select("role")

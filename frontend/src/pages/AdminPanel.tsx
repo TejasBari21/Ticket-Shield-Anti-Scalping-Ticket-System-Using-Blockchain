@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Shield, Users, Ticket, Calendar, Activity, Plus, Trash2,
@@ -16,9 +16,9 @@ import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from "recharts";
-import { localDB, LocalEvent, LocalTier, LocalTicket } from "@/lib/localDB";
+import { localDB, LocalEvent, LocalTier, LocalTicket, ArchivedEventRecord } from "@/lib/localDB";
 import { ticketDB, auditLogDB, AuditEntry } from "@/lib/localDB";
-import { supabase } from "@/integrations/supabase/client";
+import { db, KYCSubmission as MongoDBKYCSubmission } from "@/integrations/mongodb/client";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
@@ -27,8 +27,9 @@ import { format, subDays, parseISO, startOfDay } from "date-fns";
 import { useTransactionMonitor } from "@/hooks/useTransactionMonitor";
 import { TransactionFeed } from "@/components/TransactionFeed";
 import { createEvent as createEventOnChain, initializeContract } from "@/integrations/contracts/contractService";
+import { verifyQRToken, QR_WINDOW_MS, type DynamicQRPayload } from "@/hooks/useDynamicQR";
 
-const CONTRACT_ADDRESS = (import.meta as any).env.VITE_CONTRACT_ADDRESS as string;
+const CONTRACT_ADDRESS = (import.meta.env as Record<string, string>).VITE_CONTRACT_ADDRESS;
 
 interface TierForm {
   tier_name: string;
@@ -49,6 +50,7 @@ interface KycSubmission {
   wallet_address: string;
   country: string;
   id_type: string;
+  status: "pending" | "rejected" | "approved" | "unverified";
   submitted_at: string;
 }
 
@@ -115,22 +117,23 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, label, value, sub, color, trend }: StatCardProps) {
   return (
-    <div className="glass rounded-2xl p-5 flex flex-col gap-3 hover:border-primary/30 transition-colors border border-transparent">
-      <div className="flex items-center justify-between">
-        <div className={`h-9 w-9 rounded-xl flex items-center justify-center bg-current/10`} style={{ color }}>
-          <Icon className="h-5 w-5" style={{ color }} />
+    <div className="relative bg-white rounded-[1.5rem] p-6 flex flex-col gap-4 border border-[#E5E7EB] hover:border-[#1BA6A6]/30 hover:shadow-lg transition-all duration-300 group overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-[#1BA6A6]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+      <div className="relative z-10 flex items-center justify-between">
+        <div className="h-12 w-12 rounded-[1rem] flex items-center justify-center bg-[#F5F7F8] border border-[#E5E7EB] shadow-sm group-hover:scale-110 transition-transform duration-500" style={{ color }}>
+          <Icon className="h-6 w-6" style={{ color }} />
         </div>
         {trend !== undefined && (
-          <span className={`text-xs font-semibold flex items-center gap-0.5 ${trend >= 0 ? "text-neon-green" : "text-destructive"}`}>
-            {trend >= 0 ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          <div className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-md bg-[#F5F7F8] shadow-sm border border-[#E5E7EB] ${trend >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+            {trend >= 0 ? <ChevronUp className="h-3 w-3 stroke-[3]" /> : <ChevronDown className="h-3 w-3 stroke-[3]" />}
             {Math.abs(trend)}%
-          </span>
+          </div>
         )}
       </div>
-      <div>
-        <p className="text-2xl font-bold tracking-tight">{value}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-        {sub && <p className="text-[11px] text-muted-foreground/60 mt-0.5">{sub}</p>}
+      <div className="relative z-10">
+        <p className="text-3xl font-extrabold tracking-tight text-[#1F2933]">{value}</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mt-1">{label}</p>
+        {sub && <p className="text-[11px] font-medium text-[#9CA3AF] mt-1">{sub}</p>}
       </div>
     </div>
   );
@@ -157,6 +160,7 @@ const AdminPanel = () => {
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [auditFilter, setAuditFilter] = useState("");
   const [events, setEvents] = useState<LocalEvent[]>([]);
+  const [archivedEvents, setArchivedEvents] = useState<ArchivedEventRecord[]>([]);
   const [allTickets, setAllTickets] = useState<ReturnType<typeof ticketDB.getAllTickets>>([]);
   const [kycSubmissions, setKycSubmissions] = useState<KycSubmission[]>([]);
 
@@ -193,6 +197,9 @@ const AdminPanel = () => {
   const [tiersOpen, setTiersOpen] = useState(false);
   const [editingTier, setEditingTier] = useState<TierEditForm | null>(null);
 
+  // Per-event on-chain registration loading state
+  const [registeringChain, setRegisteringChain] = useState<Record<string, boolean>>({});
+
   // Verify tickets
   const [qrInput, setQrInput] = useState("");
   const [checking, setChecking] = useState(false);
@@ -207,30 +214,42 @@ const AdminPanel = () => {
 
   const refreshAll = () => {
     // Events + stats
+    console.debug("[AdminPanel.refreshAll] Loading events from localStorage");
     const evts = localDB.getEvents();
+    console.debug("[AdminPanel.refreshAll] Loaded events:", { count: evts.length, events: evts.map(e => ({ id: e.id, name: e.name, status: e.status })) });
     setEvents(evts);
+    setArchivedEvents(localDB.getArchivedEvents());
     const allTix = ticketDB.getAllTickets();
     setAllTickets(allTix);
     const totalSold = allTix.length;
     const revenue = allTix.reduce((sum, t) => sum + (t.ticket_tiers?.price ?? 0), 0);
-    // Users — fetched asynchronously from Supabase; stats update when the query resolves
-    supabase.from("users").select("user_id, email").then(({ data }) => {
-      const users = (data ?? []).map((u) => ({ id: u.user_id, email: u.email }));
-      setProfiles(users);
-      setStats((prev) => ({ ...prev, users: users.length }));
+    // Users — fetched asynchronously from MongoDB; stats update when the query resolves
+    db.users.getAll().then((users) => {
+      const mappedUsers = users.map(u => ({
+        id: u._id || u.id || u.user_id || '',
+        email: u.email,
+      }));
+      setProfiles(mappedUsers);
+      setStats((prev) => ({ ...prev, users: mappedUsers.length }));
     });
     // Audit log
     setAuditEntries(auditLogDB.getAll());
-    // KYC submissions (read from KYC store, show pending/rejected only)
-    try {
-      const kycStore: Record<string, KycSubmission> = JSON.parse(localStorage.getItem("fairpass_kyc") || "{}");
-      const pendingKyc = Object.values(kycStore).filter(
-        (s) => s.status === "pending" || s.status === "rejected",
-      );
+    // KYC submissions — fetched from MongoDB
+    db.kyc.getPending().then((kycData) => {
+      const pendingKyc = (kycData ?? []).map((s: MongoDBKYCSubmission) => ({
+        id: s._id || s.id || '',
+        full_name: s.full_name,
+        wallet_address: s.wallet_address,
+        country: s.country,
+        id_type: s.id_type,
+        status: s.status,
+        submitted_at: s.submitted_at,
+      }));
       setKycSubmissions(pendingKyc as KycSubmission[]);
-    } catch {
+    }).catch((error) => {
+      console.error('Failed to fetch KYC submissions:', error);
       setKycSubmissions([]);
-    }
+    });
     setStats((prev) => ({ ...prev, events: evts.length, tickets: totalSold, revenue: Math.round(revenue * 10000) / 10000 }));
   };
 
@@ -258,6 +277,35 @@ const AdminPanel = () => {
     refreshAll();
   };
 
+  // --- Register existing event on-chain ---
+  const handleRegisterOnChain = async (event: LocalEvent) => {
+    if (!address || !isConnected) {
+      toast({ title: "Connect admin wallet", description: "Connect MetaMask with the admin wallet first.", variant: "destructive" });
+      return;
+    }
+    setRegisteringChain((prev) => ({ ...prev, [event.id]: true }));
+    try {
+      await initializeContract(CONTRACT_ADDRESS, address);
+      const basePrice = event.ticket_tiers[0]?.price?.toString() || "0";
+      const totalCapacity = event.ticket_tiers.reduce((s, t) => s + t.total_supply, 0);
+      const { contractEventId } = await createEventOnChain(
+        event.name,
+        event.description || "",
+        new Date(event.date).getTime(),
+        event.location || event.venue,
+        totalCapacity,
+        basePrice,
+      );
+      localDB.updateEvent(event.id, { contract_event_id: contractEventId });
+      toast({ title: "Registered on Chain ✅", description: `contract_event_id = ${contractEventId}` });
+      refreshAll();
+    } catch (err) {
+      toast({ title: "Registration Failed", description: err instanceof Error ? err.message : String(err), variant: "destructive" });
+    } finally {
+      setRegisteringChain((prev) => ({ ...prev, [event.id]: false }));
+    }
+  };
+
   // --- Create Event ---
   const resetEventForm = () => {
     setEventForm({ name: "", description: "", date: "", end_date: "", venue: "", location: "", image_url: "", category: "general", resale_enabled: true, resale_price_cap_percent: "100" });
@@ -265,10 +313,22 @@ const AdminPanel = () => {
   };
 
   const handleCreateEvent = async (status: "draft" | "published") => {
-    if (!userId || !eventForm.name || !eventForm.date || !eventForm.venue) {
+    console.debug("[AdminPanel.handleCreateEvent] Starting with status:", status);
+    const normalizedName = eventForm.name.trim();
+    const normalizedVenue = eventForm.venue.trim();
+    const normalizedLocation = eventForm.location.trim() || normalizedVenue;
+
+    if (!userId || !normalizedName || !eventForm.date || !normalizedVenue) {
       toast({ title: "Missing fields", description: "Fill in name, date, and venue.", variant: "destructive" });
       return;
     }
+
+    const eventStartMs = new Date(eventForm.date).getTime();
+    if (!Number.isFinite(eventStartMs) || eventStartMs <= Date.now() + 30_000) {
+      toast({ title: "Invalid Date", description: "Event date must be at least 30 seconds in the future.", variant: "destructive" });
+      return;
+    }
+
     setSaving(true);
     try {
       const tierData = tiers.filter(t => t.tier_name).map(t => ({
@@ -282,34 +342,51 @@ const AdminPanel = () => {
       // Try to register the event on-chain so tickets can transfer real ETH
       let contract_event_id: number | undefined;
       if (address && isConnected) {
+        console.debug("[AdminPanel.handleCreateEvent] Wallet connected, attempting on-chain registration", { address, isConnected });
         try {
           await initializeContract(CONTRACT_ADDRESS, address);
           const basePrice = tierData[0]?.price?.toString() || "0";
           const totalCapacity = tierData.reduce((s, t) => s + t.total_supply, 0);
+          console.debug("[AdminPanel.handleCreateEvent] Calling createEventOnChain with:", { name: normalizedName, totalCapacity, basePrice });
           const { contractEventId } = await createEventOnChain(
-            eventForm.name,
+            normalizedName,
             eventForm.description || "",
-            new Date(eventForm.date).getTime(),
-            eventForm.location || eventForm.venue,
+            eventStartMs,
+            normalizedLocation,
             totalCapacity,
             basePrice,
           );
           contract_event_id = contractEventId;
+          console.debug("[AdminPanel.handleCreateEvent] On-chain registration succeeded:", { contractEventId });
           toast({ title: "Event Registered On-Chain ✅", description: `Contract event ID: ${contractEventId}` });
-        } catch (chainErr) {
-          toast({ title: "On-Chain Registration Skipped", description: "Event saved locally only. Connect admin wallet to register on-chain.", variant: "destructive" });
+        } catch (chainErr: unknown) {
+          const msg = chainErr instanceof Error ? chainErr.message : "Failed to register event on-chain.";
+          console.error("[AdminPanel.handleCreateEvent] On-chain registration failed:", msg);
+          if (status === "published") {
+            throw new Error(msg);
+          }
+          console.debug("[AdminPanel.handleCreateEvent] Continuing as draft despite error");
+          toast({ title: "On-Chain Registration Skipped", description: msg, variant: "destructive" });
         }
+      } else {
+        console.debug("[AdminPanel.handleCreateEvent] Wallet not connected, skipping on-chain registration", { address, isConnected });
       }
 
-      localDB.createEvent(
+      console.debug("[AdminPanel.handleCreateEvent] Creating event in local database with:", { 
+        name: normalizedName, 
+        contract_event_id,
+        status,
+        tierCount: tierData.length 
+      });
+      const createdEvent = localDB.createEvent(
         {
           organizer_id: userId,
-          name: eventForm.name,
+          name: normalizedName,
           description: eventForm.description || null,
           date: new Date(eventForm.date).toISOString(),
           end_date: eventForm.end_date ? new Date(eventForm.end_date).toISOString() : null,
-          venue: eventForm.venue,
-          location: eventForm.location || null,
+          venue: normalizedVenue,
+          location: normalizedLocation,
           image_url: eventForm.image_url || null,
           category: eventForm.category,
           status,
@@ -319,13 +396,19 @@ const AdminPanel = () => {
         },
         tierData,
       );
+      console.debug("[AdminPanel.handleCreateEvent] Event created in database:", { id: createdEvent.id, name: createdEvent.name });
       toast({ title: "Event Created! 🎉", description: status === "published" ? "Event is now live." : "Saved as draft." });
-      auditLogDB.log({ action: "event_created", user_id: userId, detail: `${eventForm.name} · ${status}` });
+      auditLogDB.log({ action: "event_created", user_id: userId, detail: `${normalizedName} · ${status}` });
+      
+      console.debug("[AdminPanel.handleCreateEvent] Calling refreshAll()");
       setCreateOpen(false);
       resetEventForm();
       refreshAll();
+      console.debug("[AdminPanel.handleCreateEvent] refreshAll() completed");
     } catch (err: unknown) {
-      toast({ title: "Error", description: err instanceof Error ? err.message : String(err), variant: "destructive" });
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error("[AdminPanel.handleCreateEvent] Error:", errMsg);
+      toast({ title: "Error", description: errMsg, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -353,15 +436,66 @@ const AdminPanel = () => {
   };
 
   // --- Verify Ticket ---
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (!qrInput.trim()) return;
     setChecking(true);
     setVerifyResult(null);
+
     try {
-      const parsed = JSON.parse(qrInput);
-      if (!parsed.ticketId) { setVerifyResult({ valid: false, message: "Missing ticket ID" }); return; }
-      setVerifyResult({ valid: false, message: "Ticket lookup requires database connection." });
-    } catch {
+      let parsed: Partial<DynamicQRPayload>;
+      try {
+        parsed = JSON.parse(qrInput);
+      } catch {
+        setVerifyResult({ valid: false, message: "Invalid QR code format" });
+        return;
+      }
+
+      if (!parsed.ticketId) {
+        setVerifyResult({ valid: false, message: "Missing ticket ID" });
+        return;
+      }
+
+      const ticket = ticketDB.getTicketById(parsed.ticketId);
+      if (!ticket) {
+        setVerifyResult({ valid: false, message: "Ticket not found" });
+        return;
+      }
+
+      if (ticket.status === "used") {
+        setVerifyResult({ valid: false, message: "Ticket already checked in", ticket, event: localDB.getEvent(ticket.event_id) ?? undefined });
+        return;
+      }
+
+      if (!parsed.token) {
+        setVerifyResult({ valid: false, message: "Missing QR security token" });
+        return;
+      }
+
+      const nowWindow = Math.floor(Date.now() / QR_WINDOW_MS);
+      const windowToCheck = typeof parsed.window === "number" ? parsed.window : nowWindow;
+      const validToken = await verifyQRToken(ticket.qr_secret, windowToCheck, parsed.token);
+      if (!validToken) {
+        setVerifyResult({ valid: false, message: "Invalid or expired QR token" });
+        return;
+      }
+
+      ticketDB.markUsed(ticket.id);
+      const event = localDB.getEvent(ticket.event_id) ?? undefined;
+      auditLogDB.log({
+        action: "check_in",
+        user_id: userId,
+        detail: `${event?.name ?? "Event"} · ${ticket.id} · ${ticket.owner_wallet}`,
+      });
+
+      setVerifyResult({
+        valid: true,
+        message: `Verified: ${event?.name ?? "Ticket"}`,
+        ticket,
+        event,
+      });
+      refreshAll();
+    } catch (err) {
+      console.error("Admin verify failed", err);
       setVerifyResult({ valid: false, message: "Invalid QR code format" });
     } finally {
       setChecking(false);
@@ -398,7 +532,7 @@ const AdminPanel = () => {
     // Mutate via available API
     localDB.updateEventStatus(editingEvent.id, editEventForm.status);
     // For name/venue/description there is no dedicated API, so apply via raw localStorage update
-    const raw: LocalEvent[] = JSON.parse(localStorage.getItem("fairpass_events") || "[]");
+    const raw: LocalEvent[] = JSON.parse(localStorage.getItem("ticketshield_events") || "[]");
     const ri = raw.findIndex(e => e.id === editingEvent.id);
     if (ri !== -1) {
       raw[ri].name = editEventForm.name || raw[ri].name;
@@ -406,8 +540,8 @@ const AdminPanel = () => {
       raw[ri].venue = editEventForm.venue || raw[ri].venue;
       raw[ri].location = editEventForm.location || null;
       raw[ri].status = editEventForm.status;
-      localStorage.setItem("fairpass_events", JSON.stringify(raw));
-      window.dispatchEvent(new StorageEvent("storage", { key: "fairpass_events" }));
+      localStorage.setItem("ticketshield_events", JSON.stringify(raw));
+      window.dispatchEvent(new StorageEvent("storage", { key: "ticketshield_events" }));
     }
     auditLogDB.log({ action: "event_created", user_id: userId, detail: `Edited event: ${editEventForm.name}` });
     toast({ title: "Event updated" });
@@ -417,10 +551,14 @@ const AdminPanel = () => {
   };
 
   const deleteEvent = (id: string, name: string) => {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-    localDB.deleteEvent(id);
-    auditLogDB.log({ action: "event_created", user_id: userId, detail: `Deleted event: ${name}` });
-    toast({ title: "Event deleted", variant: "destructive" });
+    if (!confirm(`Archive and delete ended event "${name}" from active list?`)) return;
+    const archived = localDB.archiveEndedEvent(id, userId || undefined);
+    if (!archived.ok && "reason" in archived) {
+      toast({ title: "Cannot Delete Event", description: archived.reason, variant: "destructive" });
+      return;
+    }
+    auditLogDB.log({ action: "event_created", user_id: userId, detail: `Archived ended event: ${name}` });
+    toast({ title: "Event Archived", description: "Event moved to archive storage." });
     refreshAll();
   };
 
@@ -524,126 +662,164 @@ const AdminPanel = () => {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+    <div className="min-h-screen bg-background font-sans relative overflow-hidden pb-28 text-foreground">
+      {/* Subtle ambient glows */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-[20%] left-[-20%] w-[80%] h-[40%] bg-[#1BA6A6]/5 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[40%] bg-[#7ED4D4]/5 blur-[100px] rounded-full" />
+      </div>
 
-        {/* ── Header ────────────────────────────────────────────────── */}
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 gap-2 text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </Button>
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
-              <Shield className="h-5 w-5 text-primary" />
+      <div className="p-5 max-w-7xl mx-auto relative z-10 space-y-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+
+          {/* ── Header ────────────────────────────────────────────────── */}
+          <div className="flex items-center justify-between mb-8 border-b border-[#E5E7EB] pb-6">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-[#1BA6A6] flex items-center justify-center shadow-lg shadow-[#1BA6A6]/20">
+                <Shield className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1BA6A6] mb-1">Blockchain Operations</p>
+                <h1 className="font-headline text-3xl font-extrabold tracking-tight text-[#1F2933]">Admin Dashboard</h1>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
-              <p className="text-xs text-muted-foreground">FairPass Platform Management</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={refreshAll}>
-              <RefreshCw className="h-3.5 w-3.5" /> Refresh
-            </Button>
-            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-              <DialogTrigger asChild>
-                <Button className="gradient-primary gap-2" size="sm"><Plus className="h-4 w-4" /> Create Event</Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-                <DialogHeader><DialogTitle>Create New Event</DialogTitle></DialogHeader>
-                <div className="space-y-4 pt-2">
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div><Label>Event Name *</Label><Input value={eventForm.name} onChange={(e) => setEventForm({ ...eventForm, name: e.target.value })} placeholder="My Event" className="mt-1" /></div>
-                    <div><Label>Venue *</Label><Input value={eventForm.venue} onChange={(e) => setEventForm({ ...eventForm, venue: e.target.value })} placeholder="Madison Square Garden" className="mt-1" /></div>
-                  </div>
-                  <div><Label>Description</Label><Textarea value={eventForm.description} onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })} className="mt-1" rows={3} /></div>
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div><Label>Start Date *</Label><Input type="datetime-local" value={eventForm.date} onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })} className="mt-1" /></div>
-                    <div><Label>End Date</Label><Input type="datetime-local" value={eventForm.end_date} onChange={(e) => setEventForm({ ...eventForm, end_date: e.target.value })} className="mt-1" /></div>
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div><Label>Location</Label><Input value={eventForm.location} onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })} className="mt-1" /></div>
-                    <div>
-                      <Label>Category</Label>
-                      <Select value={eventForm.category} onValueChange={(v) => setEventForm({ ...eventForm, category: v })}>
-                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="music">Music</SelectItem>
-                          <SelectItem value="sports">Sports</SelectItem>
-                          <SelectItem value="tech">Tech</SelectItem>
-                          <SelectItem value="art">Art</SelectItem>
-                          <SelectItem value="general">General</SelectItem>
-                        </SelectContent>
-                      </Select>
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                className="h-10 gap-2 rounded-xl bg-white border-[#E5E7EB] hover:bg-[#F5F7F8] transition-all text-xs font-bold text-[#6B7280]" 
+                onClick={refreshAll}
+              >
+                <RefreshCw className="h-3 w-3" /> Sync Ledger
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-10 gap-2 rounded-xl bg-[#1BA6A6]/10 border-[#1BA6A6]/20 hover:bg-[#1BA6A6]/20 transition-all text-xs font-bold text-[#1BA6A6]" 
+                onClick={() => {
+                  if (confirm("This will reset all event data to the latest sample set. Continue?")) {
+                    localDB.seedDatabase();
+                    refreshAll();
+                    toast({ title: "Database Seeded", description: "Project has been updated with future-dated events." });
+                  }
+                }}
+              >
+                <Zap className="h-3 w-3" /> Seed Project
+              </Button>
+              <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+                <DialogTrigger asChild>
+                  <Button className="h-10 gap-2 rounded-xl bg-[#1BA6A6] text-white hover:opacity-90 transition-all font-bold shadow-lg shadow-[#1BA6A6]/20">
+                    <Plus className="h-4 w-4" /> Create
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-white border-[#E5E7EB] rounded-[2rem] shadow-2xl">
+                  <DialogHeader className="mb-4">
+                    <DialogTitle className="text-2xl font-extrabold tracking-tight text-[#1F2933]">Initialize Event Vault</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-5 pt-2">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div><Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Vault Designation *</Label><Input value={eventForm.name} onChange={(e) => setEventForm({ ...eventForm, name: e.target.value })} placeholder="Global Summit 2026" className="mt-2 h-12 bg-white/5 border-white/10 focus:border-amber-500/50 rounded-xl" /></div>
+                      <div><Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Physical Location *</Label><Input value={eventForm.venue} onChange={(e) => setEventForm((prev) => ({ ...prev, venue: e.target.value, location: prev.location || e.target.value }))} placeholder="Madison Square Garden" className="mt-2 h-12 bg-white/5 border-white/10 focus:border-amber-500/50 rounded-xl" /></div>
                     </div>
-                  </div>
-                  <div><Label>Image URL</Label><Input value={eventForm.image_url} onChange={(e) => setEventForm({ ...eventForm, image_url: e.target.value })} className="mt-1" /></div>
-                  <div className="border border-border/50 rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-base font-semibold">Ticket Tiers</Label>
-                      <Button variant="outline" size="sm" onClick={addTier} className="gap-1"><Plus className="h-3 w-3" /> Add</Button>
+                    <div><Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Protocol Specs</Label><Textarea value={eventForm.description} onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })} className="mt-2 bg-white/5 border-white/10 focus:border-amber-500/50 rounded-xl resize-none" rows={4} /></div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div><Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Activation Date *</Label><Input type="datetime-local" value={eventForm.date} onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })} className="mt-2 h-12 bg-white/5 border-white/10 focus:border-amber-500/50 rounded-xl" /></div>
+                      <div><Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Termination Date</Label><Input type="datetime-local" value={eventForm.end_date} onChange={(e) => setEventForm({ ...eventForm, end_date: e.target.value })} className="mt-2 h-12 bg-white/5 border-white/10 focus:border-amber-500/50 rounded-xl" /></div>
                     </div>
-                    {tiers.map((tier, i) => (
-                      <div key={i} className="bg-muted/30 rounded-lg p-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-muted-foreground">Tier {i + 1}</span>
-                          {tiers.length > 1 && <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeTier(i)}><Trash2 className="h-3 w-3" /></Button>}
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Input placeholder="Tier name" value={tier.tier_name} onChange={(e) => updateTier(i, "tier_name", e.target.value)} />
-                          <Input type="number" placeholder="Price (ETH)" value={tier.price} onChange={(e) => updateTier(i, "price", e.target.value)} step="0.001" />
-                          <Input type="number" placeholder="Supply" value={tier.total_supply} onChange={(e) => updateTier(i, "total_supply", e.target.value)} />
-                          <Input type="number" placeholder="Max/wallet" value={tier.max_per_wallet} onChange={(e) => updateTier(i, "max_per_wallet", e.target.value)} />
-                        </div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div><Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">City/Region</Label><Input value={eventForm.location} onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })} placeholder="New York, NY" className="mt-2 h-12 bg-white/5 border-white/10 focus:border-amber-500/50 rounded-xl" /></div>
+                      <div>
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Asset Category</Label>
+                        <Select value={eventForm.category} onValueChange={(v) => setEventForm({ ...eventForm, category: v })}>
+                          <SelectTrigger className="mt-2 h-12 bg-white/5 border-white/10 rounded-xl"><SelectValue /></SelectTrigger>
+                          <SelectContent className="bg-black/90 backdrop-blur-xl border-white/10 rounded-xl">
+                            <SelectItem value="music">Music</SelectItem>
+                            <SelectItem value="sports">Sports</SelectItem>
+                            <SelectItem value="tech">Tech</SelectItem>
+                            <SelectItem value="art">Art</SelectItem>
+                            <SelectItem value="general">General</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                    ))}
+                    </div>
+                    <div><Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Cover Immutable URI</Label><Input value={eventForm.image_url} onChange={(e) => setEventForm({ ...eventForm, image_url: e.target.value })} className="mt-2 h-12 bg-white/5 border-white/10 focus:border-amber-500/50 rounded-xl" /></div>
+                    
+                    {/* Tiers block */}
+                    <div className="bg-white/5 border border-white/10 rounded-[1.5rem] p-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-bold tracking-tight text-white">Asset Verification Tiers</Label>
+                        <Button variant="outline" size="sm" onClick={addTier} className="gap-2 h-8 rounded-lg bg-black/50 border-white/10 hover:bg-white/10"><Plus className="h-3 w-3" /> Add Tier</Button>
+                      </div>
+                      {tiers.map((tier, i) => (
+                        <div key={i} className="bg-black/40 rounded-[1.25rem] p-4 border border-white/5 space-y-3">
+                          <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                            <span className="text-xs font-bold uppercase tracking-widest text-amber-500/70">Tier {i + 1}</span>
+                            {tiers.length > 1 && <Button variant="ghost" size="icon" className="h-6 w-6 text-rose-500/70 hover:text-rose-400 hover:bg-rose-500/10" onClick={() => removeTier(i)}><Trash2 className="h-3.5 w-3.5" /></Button>}
+                          </div>
+                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            <Input placeholder="Tier Class" value={tier.tier_name} onChange={(e) => updateTier(i, "tier_name", e.target.value)} className="bg-white/5 border-white/10 h-10 rounded-lg text-sm" />
+                            <Input type="number" placeholder="Value (ETH)" value={tier.price} onChange={(e) => updateTier(i, "price", e.target.value)} step="0.001" className="bg-white/5 border-white/10 h-10 rounded-lg text-sm" />
+                            <Input type="number" placeholder="Max Mint" value={tier.total_supply} onChange={(e) => updateTier(i, "total_supply", e.target.value)} className="bg-white/5 border-white/10 h-10 rounded-lg text-sm" />
+                            <Input type="number" placeholder="Cap/Wallet" value={tier.max_per_wallet} onChange={(e) => updateTier(i, "max_per_wallet", e.target.value)} className="bg-white/5 border-white/10 h-10 rounded-lg text-sm" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="bg-white/5 border border-white/10 rounded-[1.25rem] p-5 flex items-center justify-between">
+                      <div>
+                        <Label className="text-sm font-bold text-white block">Secondary Market Permitted</Label>
+                        <span className="text-xs font-medium text-muted-foreground/60 block mt-0.5">Allow sovereign transfer of assets</span>
+                      </div>
+                      <Switch checked={eventForm.resale_enabled} onCheckedChange={(v) => setEventForm({ ...eventForm, resale_enabled: v })} className="data-[state=checked]:bg-amber-500" />
+                    </div>
+                    {eventForm.resale_enabled && (
+                      <div className="bg-white/5 border border-white/10 rounded-[1.25rem] p-5 flex items-center justify-between">
+                        <div>
+                           <Label className="text-sm font-bold text-white block">Sovereign Resale Cap (%)</Label>
+                           <span className="text-xs font-medium text-muted-foreground/60 block mt-0.5">Maximum anti-scalping protocol limit</span>
+                        </div>
+                        <Input type="number" value={eventForm.resale_price_cap_percent} onChange={(e) => setEventForm({ ...eventForm, resale_price_cap_percent: e.target.value })} className="w-24 h-10 bg-black/40 border-white/10 rounded-lg text-center font-bold" />
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-4 pt-4 mt-8 border-t border-white/5">
+                      <Button variant="outline" className="flex-1 h-12 rounded-xl border-white/10 bg-black/40 hover:bg-white/5 text-sm font-bold" onClick={() => handleCreateEvent("draft")} disabled={saving}>Store Draft</Button>
+                      <Button className="flex-1 h-12 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-black font-bold shadow-lg shadow-amber-500/20" onClick={() => handleCreateEvent("published")} disabled={saving}>{saving ? "Deploying..." : "Deploy to Mainnet"}</Button>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <Label>Enable Resale</Label>
-                    <Switch checked={eventForm.resale_enabled} onCheckedChange={(v) => setEventForm({ ...eventForm, resale_enabled: v })} />
-                  </div>
-                  {eventForm.resale_enabled && (
-                    <div><Label>Max Resale Price (%)</Label><Input type="number" value={eventForm.resale_price_cap_percent} onChange={(e) => setEventForm({ ...eventForm, resale_price_cap_percent: e.target.value })} className="mt-1 w-32" /></div>
-                  )}
-                  <div className="flex gap-3 pt-2">
-                    <Button variant="outline" className="flex-1" onClick={() => handleCreateEvent("draft")} disabled={saving}>Save Draft</Button>
-                    <Button className="flex-1 gradient-primary" onClick={() => handleCreateEvent("published")} disabled={saving}>{saving ? "Creating..." : "Publish"}</Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
-        </div>
 
         {/* ── KPI Cards ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6 mt-4">
-          <StatCard icon={Calendar}    label="Total Events"   value={stats.events}   color="#6366f1" sub={`${events.filter(e=>e.status==="published").length} live`} />
-          <StatCard icon={Users}       label="Registered Users" value={stats.users}  color="#22c55e" />
-          <StatCard icon={Ticket}      label="Tickets Sold"   value={stats.tickets}  color="#06b6d4" sub={`${verifyStats.used} used · ${verifyStats.active} active`} />
-          <StatCard icon={DollarSign}  label="Gross Revenue"  value={`${stats.revenue.toFixed(4)} ETH`} color="#f59e0b" sub={`${financials.resales} resales`} />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10 mt-6 relative z-10">
+          <StatCard icon={Calendar}    label="Total Asset Pools"   value={stats.events}   color="#6366f1" sub={`${events.filter(e=>e.status==="published").length} active vaults`} />
+          <StatCard icon={Users}       label="Verified Sovereigns" value={stats.users}  color="#10b981" />
+          <StatCard icon={Ticket}      label="Minted Tickets"   value={stats.tickets}  color="#0ea5e9" sub={`${verifyStats.used} burned · ${verifyStats.active} holding`} />
+          <StatCard icon={DollarSign}  label="Protocol Value"  value={`${stats.revenue.toFixed(4)} ETH`} color="#f59e0b" sub={`${financials.resales} secondary swaps`} />
         </div>
 
         {/* ── Tabs ──────────────────────────────────────────────────── */}
-        <Tabs defaultValue="analytics" className="space-y-4">
-          <TabsList className="glass flex-wrap h-auto gap-1 p-1">
-            <TabsTrigger value="analytics" className="gap-1.5"><BarChart2 className="h-3.5 w-3.5" />Analytics</TabsTrigger>
-            <TabsTrigger value="events" className="gap-1.5"><Calendar className="h-3.5 w-3.5" />Events</TabsTrigger>
-            <TabsTrigger value="users" className="gap-1.5"><Users className="h-3.5 w-3.5" />Users</TabsTrigger>
-            <TabsTrigger value="fraud" className="gap-1.5"><AlertTriangle className="h-3.5 w-3.5" />Fraud Monitor</TabsTrigger>
-            <TabsTrigger value="verify" className="gap-1.5"><ScanLine className="h-3.5 w-3.5" />Verify</TabsTrigger>
-            <TabsTrigger value="financial" className="gap-1.5"><FileText className="h-3.5 w-3.5" />Financials</TabsTrigger>
-            <TabsTrigger value="audit" className="gap-1.5">
-              Audit Log
-              {auditEntries.length > 0 && <span className="ml-1 bg-primary/30 text-primary text-[10px] rounded-full px-1.5">{auditEntries.length}</span>}
+        <Tabs defaultValue="analytics" className="space-y-6 relative z-10">
+          <TabsList className="bg-white border border-[#E5E7EB] rounded-2xl flex-wrap h-auto gap-2 p-2 w-full justify-start shadow-sm">
+            <TabsTrigger value="analytics" className="gap-2 h-10 px-4 rounded-xl data-[state=active]:bg-[#1BA6A6]/10 data-[state=active]:text-[#1BA6A6] data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-widest text-[#6B7280]"><BarChart2 className="h-4 w-4 text-[#1BA6A6]" />Analytics</TabsTrigger>
+            <TabsTrigger value="events" className="gap-2 h-10 px-4 rounded-xl data-[state=active]:bg-[#1BA6A6]/10 data-[state=active]:text-[#1BA6A6] data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-widest text-[#6B7280]"><Calendar className="h-4 w-4 text-[#1BA6A6]" />Vaults</TabsTrigger>
+            <TabsTrigger value="users" className="gap-2 h-10 px-4 rounded-xl data-[state=active]:bg-[#1BA6A6]/10 data-[state=active]:text-[#1BA6A6] data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-widest text-[#6B7280]"><Users className="h-4 w-4 text-[#1BA6A6]" />Identities</TabsTrigger>
+            <TabsTrigger value="fraud" className="gap-2 h-10 px-4 rounded-xl data-[state=active]:bg-red-50 data-[state=active]:text-red-600 data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-widest text-[#6B7280]"><AlertTriangle className="h-4 w-4 text-red-500" />Security</TabsTrigger>
+            <TabsTrigger value="verify" className="gap-2 h-10 px-4 rounded-xl data-[state=active]:bg-[#1BA6A6]/10 data-[state=active]:text-[#1BA6A6] data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-widest text-[#6B7280]"><ScanLine className="h-4 w-4 text-[#1BA6A6]" />Scanner</TabsTrigger>
+            <TabsTrigger value="financial" className="gap-2 h-10 px-4 rounded-xl data-[state=active]:bg-[#FACC15]/10 data-[state=active]:text-[#FACC15] data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-widest text-[#6B7280]"><FileText className="h-4 w-4 text-[#FACC15]" />Finances</TabsTrigger>
+            <TabsTrigger value="audit" className="gap-2 h-10 px-4 rounded-xl data-[state=active]:bg-[#1BA6A6]/10 data-[state=active]:text-[#1BA6A6] data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-widest text-[#6B7280]">
+              Ledger
+              {auditEntries.length > 0 && <span className="flex items-center justify-center bg-[#1BA6A6] text-white text-[10px] rounded-full h-5 w-5">{auditEntries.length}</span>}
             </TabsTrigger>
-            <TabsTrigger value="kyc" className="gap-1.5">
-              <UserCheck className="h-3.5 w-3.5" />KYC
-              {kycSubmissions.length > 0 && <span className="ml-1 bg-amber-500 text-white text-[10px] rounded-full px-1.5">{kycSubmissions.length}</span>}
+            <TabsTrigger value="kyc" className="gap-2 h-10 px-4 rounded-xl data-[state=active]:bg-[#1BA6A6]/10 data-[state=active]:text-[#1BA6A6] data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-widest text-[#6B7280]">
+              <UserCheck className="h-4 w-4 text-[#1BA6A6]" />KYC
+              {kycSubmissions.length > 0 && <span className="flex items-center justify-center bg-[#1BA6A6] text-white font-black text-[10px] rounded-full h-5 w-5">{kycSubmissions.length}</span>}
             </TabsTrigger>
-            <TabsTrigger value="live" className="gap-1.5">
-              <Zap className="h-3.5 w-3.5" />Live
+            <TabsTrigger value="live" className="gap-2 h-10 px-4 rounded-xl data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-widest text-[#6B7280]">
+              <Zap className="h-4 w-4 text-emerald-500 animate-pulse" />MemPool
               {liveTxs.length > 0 && (
-                <span className="ml-1 bg-emerald-500 text-white text-[10px] rounded-full px-1.5">{liveTxs.length}</span>
+                <span className="flex items-center justify-center bg-emerald-500 text-white text-[10px] rounded-full h-5 w-5 shadow-sm">{liveTxs.length}</span>
               )}
             </TabsTrigger>
           </TabsList>
@@ -774,7 +950,25 @@ const AdminPanel = () => {
                 <p>No events yet. Click "Create Event" to add one.</p>
               </div>
             )}
+            {archivedEvents.length > 0 && (
+              <div className="glass rounded-2xl p-4 border border-amber-500/20 bg-amber-500/5">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-semibold text-amber-300">Archived Ended Events</h4>
+                  <Badge className="bg-amber-500/20 text-amber-300">{archivedEvents.length}</Badge>
+                </div>
+                <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
+                  {archivedEvents.slice(0, 8).map((record) => (
+                    <div key={record.id} className="text-xs text-muted-foreground flex items-center justify-between gap-2">
+                      <span className="truncate">{record.event.name}</span>
+                      <span className="shrink-0">{format(parseISO(record.archived_at), "MMM d, yyyy")}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {events.map((event) => {
+              const endAt = new Date(event.end_date || event.date).getTime();
+              const hasEnded = !Number.isNaN(endAt) && Date.now() >= endAt;
               const sold = event.ticket_tiers?.reduce((s, t) => s + (t.total_supply - t.remaining_supply), 0) ?? 0;
               const total = event.ticket_tiers?.reduce((s, t) => s + t.total_supply, 0) ?? 0;
               const rev = event.ticket_tiers?.reduce((s, t) => s + (t.total_supply - t.remaining_supply) * t.price, 0) ?? 0;
@@ -792,18 +986,48 @@ const AdminPanel = () => {
                           "bg-muted text-muted-foreground"
                         }>{event.status}</Badge>
                         <Badge variant="outline" className="text-[10px]">{event.category}</Badge>
+                        {/* On-chain status badge */}
+                        {event.contract_event_id !== undefined ? (
+                          <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] gap-1">
+                            <CheckCircle className="h-3 w-3" /> On-Chain #{event.contract_event_id}
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] gap-1">
+                            <AlertTriangle className="h-3 w-3" /> Not on Chain
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground mt-0.5">{event.venue} {event.location ? `· ${event.location}` : ""}</p>
                       <p className="text-xs text-muted-foreground">{format(parseISO(event.date), "MMM d, yyyy · h:mm a")}</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Register on chain if missing */}
+                      {event.contract_event_id === undefined && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10 text-xs"
+                          disabled={registeringChain[event.id] || !isConnected}
+                          onClick={() => handleRegisterOnChain(event)}
+                        >
+                          <RefreshCw className={`h-3 w-3 ${registeringChain[event.id] ? "animate-spin" : ""}`} />
+                          {registeringChain[event.id] ? "Registering…" : "Register on Chain"}
+                        </Button>
+                      )}
                       <Button variant="outline" size="sm" className="gap-1" onClick={() => openEditEvent(event)}>
                         <Edit className="h-3 w-3" /> Edit
                       </Button>
                       <Button variant="outline" size="sm" className="gap-1" onClick={() => loadTiers(event.id)}>
                         <Ticket className="h-3 w-3" /> Tiers
                       </Button>
-                      <Button variant="outline" size="sm" className="gap-1 text-destructive hover:text-destructive" onClick={() => deleteEvent(event.id, event.name)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1 text-destructive hover:text-destructive"
+                        onClick={() => deleteEvent(event.id, event.name)}
+                        disabled={!hasEnded}
+                        title={hasEnded ? "Archive ended event" : "Only ended events can be deleted"}
+                      >
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
@@ -907,76 +1131,141 @@ const AdminPanel = () => {
           </TabsContent>
 
           {/* ══════════════════════════════════════════════════════════
-              FRAUD MONITORING TAB
+              FRAUD MONITORING TAB (Stitch Redesign)
           ══════════════════════════════════════════════════════════ */}
-          <TabsContent value="fraud" className="space-y-5">
-            <div className="grid sm:grid-cols-3 gap-3">
-              <StatCard icon={TrendingUp}    label="Total Resales"       value={auditEntries.filter(a=>a.action==="ticket_resale").length}  color="#f97316" />
-              <StatCard icon={AlertTriangle} label="Failed Check-ins"    value={fraudEntries.filter(a=>a.action==="check_in").length}        color="#ef4444" />
-              <StatCard icon={Ban}           label="Listed Tickets"      value={verifyStats.listed}                                          color="#f59e0b" />
+          <TabsContent value="fraud" className="space-y-6">
+            
+            {/* Critical Alert Banner (Mocked Live Status) */}
+            <div className="relative overflow-hidden bg-[#1a0b0b] rounded-2xl border border-error/30 shadow-[0_0_30px_rgba(255,180,171,0.15)] p-6">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                <AlertTriangle className="h-24 w-24 text-error" />
+              </div>
+              <div className="relative z-10">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="bg-error/20 p-2.5 rounded-xl border border-error/30">
+                    <AlertTriangle className="text-error h-6 w-6" />
+                  </div>
+                  <span className="text-[10px] font-black bg-error text-error-foreground px-2 py-1 rounded-md">CRITICAL</span>
+                </div>
+                <h3 className="font-headline font-extrabold text-xl text-error mb-1">Large Scale Duplicate Attempt</h3>
+                <p className="text-on-surface-variant/80 text-xs mb-6">Main Gate B • Immediate action required</p>
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+                    <p className="text-[10px] text-on-surface-variant font-medium mb-1">Impacted</p>
+                    <p className="font-bold text-lg leading-none">{fraudEntries.filter(a=>a.action==="check_in").length} <span className="text-xs font-medium text-on-surface-variant">Tix</span></p>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+                    <p className="text-[10px] text-on-surface-variant font-medium mb-1">Certainty</p>
+                    <p className="font-bold text-lg leading-none text-tertiary">99.4%</p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <Button className="w-full bg-error text-error-foreground font-black text-sm h-12 rounded-xl hover:bg-error/90 transition-colors shadow-lg shadow-error/20">
+                    LOCK ENTRY POINT
+                  </Button>
+                </div>
+              </div>
             </div>
 
-            <div className="glass rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                <SectionTitle>Suspicious Activity Feed</SectionTitle>
-                <div className="flex gap-1">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-surface-container rounded-2xl p-4 border border-white/5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Activity className="text-primary h-5 w-5" />
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Total Resales</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-2xl font-headline font-extrabold leading-none">{auditEntries.filter(a=>a.action==="ticket_resale").length}</span>
+                  <span className="text-[10px] text-primary font-bold mt-1">Monitored</span>
+                </div>
+              </div>
+              <div className="bg-surface-container rounded-2xl p-4 border border-white/5 relative overflow-hidden">
+                <div className="flex items-center gap-2 mb-3">
+                  <Shield className="text-tertiary h-5 w-5" />
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Saved Loss</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-2xl font-headline font-extrabold leading-none text-tertiary">$12.4K</span>
+                  <span className="text-[10px] text-on-surface-variant font-medium mt-1">Estimated Today</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-headline text-xl font-extrabold">Activity Feed</h3>
+                <div className="flex gap-1 bg-white/5 p-1 rounded-lg">
                   {(["all", "resale", "blocked"] as const).map(f => (
-                    <Button key={f} size="sm" variant={fraudFilter === f ? "default" : "outline"} className="h-7 text-xs px-2.5" onClick={() => setFraudFilter(f)}>
-                      {f === "all" ? "All" : f === "resale" ? "Resales" : "Blocked"}
-                    </Button>
+                    <button key={f} className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-colors ${fraudFilter === f ? "bg-primary text-background" : "text-on-surface-variant hover:text-white"}`} onClick={() => setFraudFilter(f)}>
+                      {f === "resale" ? "Resales" : f}
+                    </button>
                   ))}
                 </div>
               </div>
 
               {fraudEntries.length === 0 ? (
-                <div className="py-10 text-center text-muted-foreground">
+                <div className="py-10 text-center text-muted-foreground glass-panel rounded-2xl border border-white/5">
                   <Shield className="h-10 w-10 mx-auto mb-3 opacity-30" />
                   <p className="text-sm">No suspicious activity detected. 🎉</p>
                 </div>
               ) : (
-                <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-                  {fraudEntries.map(e => (
-                    <div key={e.id} className="flex items-start justify-between gap-3 rounded-xl border border-orange-500/15 bg-orange-500/5 px-4 py-3">
-                      <div className="flex items-start gap-2">
-                        <AlertTriangle className="h-4 w-4 text-orange-400 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium capitalize">{e.action.replace(/_/g, " ")}</p>
-                          {e.wallet && <p className="text-xs font-mono text-muted-foreground">Wallet: {e.wallet.slice(0,10)}…{e.wallet.slice(-6)}</p>}
-                          {e.event_name && <p className="text-xs text-muted-foreground">{e.event_name}</p>}
-                          {e.detail && <p className="text-xs text-muted-foreground">{e.detail}</p>}
+                <div className="space-y-3">
+                  {fraudEntries.map(e => {
+                    const isResale = e.action === "ticket_resale";
+                    return (
+                      <div key={e.id} className="bg-surface-container-high rounded-2xl p-4 border border-white/5 hover:bg-surface-variant transition-colors group">
+                        <div className="flex items-start gap-4">
+                          <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center border ${isResale ? "bg-tertiary/10 border-tertiary/20 text-tertiary" : "bg-error/10 border-error/20 text-error"}`}>
+                            {isResale ? <RefreshCw className="h-5 w-5" /> : <Ban className="h-5 w-5" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`text-[9px] px-2 py-0.5 rounded-md font-black uppercase tracking-wider ${isResale ? "bg-tertiary/20 text-tertiary" : "bg-error/20 text-error"}`}>
+                                {isResale ? "Market Monitor" : "High Risk"}
+                              </span>
+                              <span className="text-[10px] font-medium text-on-surface-variant">{format(parseISO(e.timestamp), "HH:mm")}</span>
+                            </div>
+                            <h4 className="font-bold text-sm mb-0.5 truncate">{e.action.replace(/_/g, " ")}</h4>
+                            <p className="text-xs text-on-surface-variant leading-relaxed">
+                              {e.wallet && <span className="font-mono text-[11px] text-primary">0x{e.wallet.slice(0, 4)}...{e.wallet.slice(-4)}</span>}
+                              {" "} • {e.event_name ? e.event_name : "System"}
+                              {" "}{e.detail && <span className="opacity-80">— {e.detail}</span>}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <span className="text-[11px] text-muted-foreground/70 flex-shrink-0">{format(parseISO(e.timestamp), "MMM d, HH:mm")}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
-
+            
             {/* Resale heatmap by event */}
             {events.length > 0 && (
-              <div className="glass rounded-2xl p-5">
+              <div className="bg-surface-container rounded-2xl p-5 border border-white/5">
                 <SectionTitle>Resale Activity by Event</SectionTitle>
-                <div className="space-y-3">
+                <div className="space-y-3 mt-3">
                   {events.map(ev => {
                     const resales = auditEntries.filter(a => a.action === "ticket_resale" && a.event_id === ev.id).length;
                     const sold = (ev.ticket_tiers?.reduce((s, t) => s + (t.total_supply - t.remaining_supply), 0) ?? 0);
                     const resalePct = sold > 0 ? Math.round((resales / sold) * 100) : 0;
                     return (
-                      <div key={ev.id} className="space-y-1">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground truncate flex-1 mr-4">{ev.name}</span>
-                          <span className={resalePct > 30 ? "text-destructive" : resalePct > 15 ? "text-orange-400" : "text-neon-green"}>
+                      <div key={ev.id} className="space-y-2">
+                        <div className="flex justify-between text-xs font-medium">
+                          <span className="text-on-surface-variant truncate flex-1 mr-4">{ev.name}</span>
+                          <span className={resalePct > 30 ? "text-error font-bold" : resalePct > 15 ? "text-tertiary font-bold" : "text-neon-green"}>
                             {resales} resales ({resalePct}%)
                           </span>
                         </div>
-                        <Progress value={resalePct} className="h-1.5" />
+                        <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                          <div className={`h-full rounded-full ${resalePct > 30 ? "bg-error" : resalePct > 15 ? "bg-tertiary" : "bg-neon-green"}`} style={{ width: `${resalePct}%` }} />
+                        </div>
                       </div>
                     );
                   })}
                 </div>
               </div>
             )}
+
           </TabsContent>
 
           {/* ══════════════════════════════════════════════════════════
@@ -1020,9 +1309,10 @@ const AdminPanel = () => {
               </div>
               <h3 className="text-lg font-bold text-center">Manual QR Verification</h3>
               <p className="text-muted-foreground text-center text-sm">Paste ticket QR payload to verify and check in</p>
+              <Button variant="outline" className="w-full" onClick={() => navigate("/check-in")}>Open Camera Scanner Console</Button>
               <div className="space-y-3">
                 <Input
-                  placeholder='{"ticketId":"...","secret":"..."}'
+                  placeholder='{"ticketId":"...","window":12345,"token":"..."}'
                   value={qrInput}
                   onChange={(e) => setQrInput(e.target.value)}
                   className="font-mono text-xs"
@@ -1166,7 +1456,7 @@ const AdminPanel = () => {
             {/* Export hint */}
             <div className="glass rounded-2xl p-5 flex items-center gap-3">
               <Download className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-              <p className="text-sm text-muted-foreground">To export a CSV report, open browser DevTools → Application → Local Storage → copy <code className="font-mono text-xs bg-muted/30 px-1 rounded">fairpass_tickets</code> data.</p>
+              <p className="text-sm text-muted-foreground">To export a CSV report, open browser DevTools → Application → Local Storage → copy <code className="font-mono text-xs bg-muted/30 px-1 rounded">ticketshield_tickets</code> data.</p>
             </div>
           </TabsContent>
 
@@ -1414,6 +1704,7 @@ const AdminPanel = () => {
         </Dialog>
 
       </motion.div>
+      </div>
     </div>
   );
 };

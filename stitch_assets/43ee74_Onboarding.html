@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TicketShield Onboarding</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-container": "#d6a9ff",
+              "secondary-fixed-dim": "#ddb7ff",
+              "primary-fixed-dim": "#cbbeff",
+              "on-secondary-fixed": "#2c0051",
+              "tertiary-fixed": "#63f7ff",
+              "surface-variant": "#343440",
+              "tertiary": "#00dce5",
+              "inverse-surface": "#e3e0f1",
+              "inverse-primary": "#632ef6",
+              "surface-container-low": "#1b1a26",
+              "outline-variant": "#484456",
+              "surface-container-lowest": "#0d0d18",
+              "secondary-fixed": "#f0dbff",
+              "primary-fixed": "#e6deff",
+              "inverse-on-surface": "#302f3b",
+              "on-tertiary": "#003739",
+              "error-container": "#93000a",
+              "tertiary-container": "#007378",
+              "on-primary-fixed-variant": "#4b00d4",
+              "on-tertiary-fixed": "#002021",
+              "outline": "#938ea2",
+              "primary": "#cbbeff",
+              "surface-tint": "#cbbeff",
+              "secondary-container": "#6f00be",
+              "primary-container": "#6c3bff",
+              "on-surface": "#e3e0f1",
+              "surface-dim": "#12121d",
+              "on-secondary-fixed-variant": "#6900b3",
+              "on-secondary": "#490080",
+              "tertiary-fixed-dim": "#00dce5",
+              "surface-container-high": "#292935",
+              "on-error-container": "#ffdad6",
+              "background": "#12121d",
+              "on-background": "#e3e0f1",
+              "on-error": "#690005",
+              "error": "#ffb4ab",
+              "surface": "#12121d",
+              "on-tertiary-container": "#87f8ff",
+              "on-surface-variant": "#cac3d9",
+              "on-primary": "#330098",
+              "surface-container-highest": "#343440",
+              "surface-container": "#1f1e2a",
+              "on-primary-fixed": "#1d0061",
+              "surface-bright": "#383845",
+              "secondary": "#ddb7ff",
+              "on-primary-container": "#eae2ff",
+              "on-tertiary-fixed-variant": "#004f53"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(56, 56, 69, 0.4);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+      .glow-border {
+        border: 1px solid rgba(203, 190, 255, 0.15);
+      }
+      body {
+        background-color: #0d0d18;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body text-on-surface antialiased min-h-screen flex flex-col overflow-hidden">
+<!-- Top Navigation Placeholder (Hidden for focused flow) -->
+<header class="p-6 flex justify-between items-center w-full z-10">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-container to-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-fixed text-sm" data-icon="shield">shield</span>
+</div>
+<span class="font-headline font-extrabold text-xl tracking-tight">TicketShield</span>
+</div>
+<button class="text-on-surface-variant font-label text-sm uppercase tracking-widest hover:text-primary transition-colors">Skip</button>
+</header>
+<main class="flex-grow flex flex-col items-center justify-center px-6 relative">
+<!-- Background Ambient Glows -->
+<div class="absolute top-1/4 -left-20 w-80 h-80 bg-primary-container/20 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-1/4 -right-20 w-80 h-80 bg-secondary/10 rounded-full blur-[120px]"></div>
+<!-- Central Visualization Canvas -->
+<div class="relative w-full max-w-md aspect-square flex items-center justify-center mb-12">
+<!-- Floating Decorative Glass Cards (Asymmetric Layout) -->
+<div class="absolute top-0 right-4 glass-card glow-border p-4 rounded-xl rotate-12 z-0">
+<span class="material-symbols-outlined text-tertiary text-4xl" data-icon="verified">verified</span>
+</div>
+<div class="absolute bottom-10 left-0 glass-card glow-border p-5 rounded-xl -rotate-6 z-0 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="lock">lock</span>
+</div>
+<div>
+<div class="h-2 w-16 bg-surface-variant rounded-full mb-2"></div>
+<div class="h-2 w-10 bg-surface-variant/50 rounded-full"></div>
+</div>
+</div>
+<!-- Main Sovereign Ticket Asset -->
+<div class="relative w-72 h-96 glass-card glow-border rounded-xl flex flex-col overflow-hidden shadow-2xl z-10 border-t-primary/20 border-t-[0.5px]">
+<!-- Image Section -->
+<div class="h-1/2 w-full overflow-hidden">
+<img alt="Abstract concert lighting" class="w-full h-full object-cover mix-blend-luminosity opacity-80" data-alt="Abstract vibrant purple concert stage lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7GnehW6Pj1PJeeOwKY0YaacyrhR8zQrY6283wQ98OUyMGXzQBNN4o59nCs_Gp1Px6sWvSmyiQ6gfrPztYmusSpV5mZyqP-S9lxWIhCyL9hNAyTfDg6IQbx_u3UfgzDidWmfzH7o_pB66uCmPysdrZ7vxX3xCSP4BMKPHZ_VeQRkQL9SA1TvKGOW-WoEmzuB0Avvqk5GurKePYWRr1tUI-ObZKsi2zZuwOQzDkSx1V-qbCTWn8KJDMf82JJrofjERo-7uFnvELMNE"/>
+</div>
+<!-- Card Content -->
+<div class="p-6 flex flex-col justify-between flex-grow bg-surface-container-high/60">
+<div>
+<div class="flex justify-between items-start mb-4">
+<span class="text-[0.6rem] font-label font-bold uppercase tracking-[0.2em] text-on-surface-variant">Verified Access</span>
+<div class="px-2 py-0.5 rounded-full bg-tertiary-container/30 border border-tertiary/20 flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px] text-tertiary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-[10px] text-on-tertiary-container font-bold">BLOCKCHAIN</span>
+</div>
+</div>
+<h3 class="font-headline font-bold text-lg leading-tight text-white">Midnight Resonance World Tour</h3>
+<p class="text-on-surface-variant text-xs mt-2 font-body">Section A, Row 12, Seat 42</p>
+</div>
+<!-- QR Placeholder Section -->
+<div class="flex items-center justify-between border-t border-outline-variant/20 pt-4">
+<div class="w-12 h-12 bg-white/5 rounded-lg flex items-center justify-center border border-white/10">
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="qr_code_2">qr_code_2</span>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest font-label">Ticket ID</p>
+<p class="font-mono text-xs text-primary font-semibold">#77-VLT-9X2</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Text Content Area -->
+<div class="text-center w-full max-w-sm mb-12">
+<h1 class="font-headline font-extrabold text-4xl mb-4 tracking-tight">Secure Tickets</h1>
+<p class="font-body text-on-surface-variant text-lg leading-relaxed px-4">
+                Prevent fake and duplicate tickets with blockchain verification.
+            </p>
+</div>
+<!-- Interaction Area -->
+<footer class="w-full max-w-md mb-8 flex flex-col items-center gap-8">
+<!-- Progress Indicators -->
+<div class="flex gap-2">
+<div class="h-1.5 w-8 rounded-full bg-gradient-to-r from-primary-container to-secondary"></div>
+<div class="h-1.5 w-1.5 rounded-full bg-surface-container-highest"></div>
+<div class="h-1.5 w-1.5 rounded-full bg-surface-container-highest"></div>
+</div>
+<!-- Primary Action -->
+<button class="w-full py-5 rounded-xl bg-gradient-to-br from-primary-container to-secondary text-on-primary-fixed font-headline font-extrabold text-lg flex items-center justify-center gap-3 shadow-lg shadow-primary-container/20 active:scale-[0.98] transition-all">
+                Next
+                <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</footer>
+</main>
+<!-- Bottom Decoration -->
+<div class="h-1 w-32 bg-surface-container-highest mx-auto rounded-full mb-2"></div>
+</body></html>

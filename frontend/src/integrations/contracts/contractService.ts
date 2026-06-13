@@ -13,6 +13,33 @@ export interface ContractConfig {
 let contract: Contract | null = null;
 let currentProvider: BrowserProvider | null = null;
 
+function normalizeEthAmount(value: string, label: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error(`${label} is required.`);
+  }
+
+  // If a bigint wei value is accidentally passed (e.g. "10000000000000000"),
+  // convert it to ETH decimal string so parseEther receives valid ETH units.
+  if (/^\d{15,}$/.test(trimmed)) {
+    const wei = BigInt(trimmed);
+    const whole = wei / 10n ** 18n;
+    const fraction = (wei % 10n ** 18n).toString().padStart(18, "0").replace(/0+$/, "");
+    return fraction ? `${whole.toString()}.${fraction}` : whole.toString();
+  }
+
+  return trimmed;
+}
+
+async function assertContractDeployed(contractAddress: string, provider: BrowserProvider) {
+  const code = await provider.getCode(contractAddress);
+  if (!code || code === "0x") {
+    throw new Error(
+      `No smart contract found at ${contractAddress}. Deploy the contract and update VITE_CONTRACT_ADDRESS before sending transactions.`
+    );
+  }
+}
+
 /**
  * Initialize the contract instance.
  * @param contractAddress - The deployed contract address.
@@ -26,6 +53,7 @@ export async function initializeContract(contractAddress: string, signerAddress?
   }
 
   currentProvider = new BrowserProvider((window as any).ethereum);
+  await assertContractDeployed(contractAddress, currentProvider);
   // Explicitly request the signer for the given address so that we always use the
   // wallet that is connected in the dApp, regardless of what MetaMask has "selected".
   const signer = signerAddress
@@ -70,35 +98,196 @@ export async function createEvent(
   eventDate: number,
   location: string,
   capacity: number,
-  basePrice: string
+  basePrice: string,
+  maxResalePrice: string = "0"
 ): Promise<{ txHash: string; contractEventId: number }> {
   const contract = getContract();
+  const normalizedBasePrice = normalizeEthAmount(basePrice, "Base price");
+  const normalizedMaxResalePrice = normalizeEthAmount(maxResalePrice, "Max resale price");
+  const eventDateInSeconds = Math.floor(eventDate / 1000);
+
+  // Get the current block timestamp from the provider, not system clock
+  // This ensures our validation matches what the contract will check
+  const provider = getProvider();
+  const currentBlock = await provider.getBlock("latest");
+  if (!currentBlock) {
+    throw new Error("Failed to get current block timestamp from provider.");
+  }
+  const blockTimestampSeconds = Number(currentBlock.timestamp);
+
+  // Event must be at least 60 seconds in the future (adding 30s buffer for mining time)
+  if (!Number.isFinite(eventDate) || eventDateInSeconds <= blockTimestampSeconds + 60) {
+    const blockTime = new Date(blockTimestampSeconds * 1000).toISOString();
+    const eventTime = new Date(eventDateInSeconds * 1000).toISOString();
+    throw new Error(
+      `Event date must be at least 60 seconds in the future. Block time: ${blockTime}, Event time: ${eventTime}`
+    );
+  }
+
+  if (!Number.isFinite(capacity) || capacity <= 0) {
+    throw new Error("Event capacity must be greater than 0.");
+  }
+
+  console.debug("[createEventOnChain] Event validation passed", {
+    eventDateInSeconds,
+    blockTimestampSeconds,
+    bufferSeconds: eventDateInSeconds - blockTimestampSeconds,
+  });
+
+  // Attempt a staticCall to catch validation errors before submitting the transaction
+  try {
+    console.debug("[createEventOnChain] Performing static call simulation...");
+    await (contract as any).createEvent.staticCall(
+      name,
+      description,
+      eventDateInSeconds,
+      location,
+      capacity,
+      parseEther(normalizedBasePrice),
+      parseEther(normalizedMaxResalePrice)
+    );
+    console.debug("[createEventOnChain] Static call succeeded");
+  } catch (simError) {
+    const simMsg = simError instanceof Error ? simError.message : String(simError);
+    console.warn("[createEventOnChain] Static call failed (may still work on-chain):", simMsg);
+  }
+
+  console.debug("[createEventOnChain] Submitting transaction with params:", {
+    name,
+    description,
+    eventDateInSeconds,
+    location,
+    capacity,
+    basePrice: normalizedBasePrice,
+    maxResalePrice: normalizedMaxResalePrice,
+  });
 
   const tx = await contract.createEvent(
     name,
     description,
-    Math.floor(eventDate / 1000), // Convert to Unix timestamp
+    eventDateInSeconds,
     location,
     capacity,
-    parseEther(basePrice)
+    parseEther(normalizedBasePrice),
+    parseEther(normalizedMaxResalePrice)
   );
 
-  const receipt = await tx.wait();
+  console.debug("[createEventOnChain] Transaction submitted, hash:", tx.hash);
 
-  // Extract eventId from the EventCreated event log
-  let contractEventId = 0;
-  if (receipt?.logs) {
-    for (const log of receipt.logs) {
-      try {
-        const parsed = (contract as any).interface.parseLog({ topics: log.topics as string[], data: log.data });
-        if (parsed?.name === "EventCreated") {
-          contractEventId = Number(parsed.args[0]);
-          break;
-        }
-      } catch { /* skip logs that can't be decoded */ }
-    }
+  const receipt = await tx.wait();
+  console.debug("[createEventOnChain] Transaction receipt received:", {
+    status: receipt?.status,
+    blockNumber: receipt?.blockNumber,
+    logsCount: receipt?.logs?.length,
+    hash: receipt?.hash,
+    gasUsed: receipt?.gasUsed?.toString(),
+  });
+
+  if (!receipt) {
+    throw new Error("Transaction receipt not found. Transaction may not have been included in a block.");
   }
 
+  if (receipt.status === 0) {
+    throw new Error("Transaction reverted on-chain. The event creation failed. Try again with valid parameters.");
+  }
+
+  if (receipt.status !== 1) {
+    console.warn("[createEventOnChain] Unexpected receipt status:", receipt.status);
+  }
+
+  // Extract eventId from the EventCreated event log
+  // EventCreated(uint256 indexed eventId, address indexed organizer, string name, uint256 eventDate, uint256 capacity)
+  // For indexed parameters: topics[0] = event signature, topics[1] = eventId (first indexed), topics[2] = organizer (second indexed)
+  let contractEventId: number | null = null;
+  if (receipt?.logs && receipt.logs.length > 0) {
+    console.debug(`[createEventOnChain] Parsing ${receipt.logs.length} logs for EventCreated event`);
+    
+    for (let i = 0; i < receipt.logs.length; i++) {
+      const log = receipt.logs[i];
+      
+      try {
+        // Use interface.parseLog to correctly decode the log
+        const parsed = (contract as any).interface.parseLog({
+          topics: log.topics as string[],
+          data: log.data
+        });
+        
+        console.debug(`[createEventOnChain] Log ${i} parsed - name:`, parsed?.name);
+        
+        if (parsed && parsed.name === "EventCreated") {
+          // The interface.parseLog returns args in order
+          // First arg (index 0) is eventId
+          if (parsed.args && parsed.args.length > 0) {
+            const eventIdRaw = parsed.args[0];
+            contractEventId = typeof eventIdRaw === 'bigint' ? Number(eventIdRaw) : Number(eventIdRaw);
+            console.debug(`[createEventOnChain] EXTRACTED EventCreated - eventId:`, contractEventId);
+            break;
+          }
+        }
+      } catch (parseErr) {
+        // This log doesn't match our event, continue
+        console.debug(`[createEventOnChain] Log ${i} not EventCreated (parse failed or different event)`);
+      }
+    }
+  } else {
+    console.warn("[createEventOnChain] Receipt has no logs!");
+  }
+
+  if (contractEventId === null || contractEventId === undefined || contractEventId < 0) {
+    console.error("[createEventOnChain] EventCreated log not found or eventId is invalid:", contractEventId);
+    throw new Error("Event creation succeeded but EventCreated log eventId could not be extracted. Check that ABI is correct.");
+  }
+
+  console.debug("[createEventOnChain] Event creation successful:", { txHash: receipt?.hash, contractEventId });
+  
+  // VERIFY: Confirm event was actually stored on-chain
+  if (contractEventId !== null) {
+    try {
+      console.debug("[createEventOnChain] VERIFYING event was stored on-chain...");
+      const storedEvent = await contract.getFunction("getEvent")(BigInt(contractEventId));
+      console.debug("[createEventOnChain] VERIFICATION PASSED - Event found on-chain:", {
+        eventId: contractEventId,
+        storedName: storedEvent.name,
+        storedOrganizer: storedEvent.organizer
+      });
+    } catch (verifyErr) {
+      const msg = verifyErr instanceof Error ? verifyErr.message : String(verifyErr);
+      console.error("[createEventOnChain] VERIFICATION FAILED - Event not found after creation:", { 
+        eventId: contractEventId, 
+        error: msg 
+      });
+      
+      // Diagnostic: Try to get organizer's events to see what's actually stored
+      try {
+        const signerAddress = await (contract as any).signer.getAddress();
+        console.debug("[createEventOnChain] Organizer address:", signerAddress);
+        const organizedEvents = await (contract as any).getOrganizedEvents(signerAddress);
+        console.debug("[createEventOnChain] DIAGNOSTIC - Organizer's events found on-chain:", {
+          count: organizedEvents.length,
+          eventIds: organizedEvents.map((id: any) => Number(id.toString()))
+        });
+        
+        if (organizedEvents.length > 0) {
+          // Try to get the most recent event
+          const mostRecentId = Number(organizedEvents[organizedEvents.length - 1].toString());
+          try {
+            const recentEvent = await contract.getFunction("getEvent")(BigInt(mostRecentId));
+            console.debug("[createEventOnChain] Most recent event on-chain:", {
+              eventId: mostRecentId,
+              name: recentEvent.name
+            });
+          } catch (getErr) {
+            console.debug("[createEventOnChain] Could not fetch most recent event:", getErr);
+          }
+        }
+      } catch (diagErr) {
+        console.debug("[createEventOnChain] Diagnostic query failed:", diagErr);
+      }
+      
+      throw new Error(`Event creation transaction succeeded but event ${contractEventId} was not found on-chain. Check console for diagnostics.`);
+    }
+  }
+  
   return { txHash: receipt?.hash || "", contractEventId };
 }
 
@@ -107,7 +296,7 @@ export async function createEvent(
  */
 export async function getEvent(eventId: number) {
   const contract = getContract() as any;
-  return await contract.getEvent(BigInt(eventId));
+  return await contract.getFunction("getEvent")(BigInt(eventId));
 }
 
 /**
@@ -135,15 +324,51 @@ export async function getOrganizedEvents(organizerAddress: string): Promise<numb
  */
 export async function mintTicket(eventId: number, recipientAddress: string, price: string): Promise<{ txHash: string; tokenId: number }> {
   const contract = getContract();
+  const normalizedPrice = normalizeEthAmount(price, "Ticket price");
+
+  console.debug("[mintTicket] Attempting ticket mint:", { eventId, recipientAddress, price: normalizedPrice });
+
+  let eventExists = false;
+  let storedEventData: any = null;
+  try {
+    storedEventData = await contract.getFunction("getEvent")(BigInt(eventId));
+    console.debug("[mintTicket] Event found on-chain:", { eventId, eventName: storedEventData.name });
+    eventExists = true;
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[mintTicket] Event not found on-chain:", { eventId, error: errMsg });
+    
+    // Try to provide diagnostic info
+    try {
+      // Query contract to see if there are any events at all
+      console.debug("[mintTicket] Querying organizer events for admin wallet...");
+      const adminAddress = (import.meta as any).env.VITE_ADMIN_ADDRESS;
+      const adminEvents = await (contract as any).getOrganizedEvents(adminAddress);
+      console.debug("[mintTicket] Admin events found on-chain:", { 
+        eventIds: adminEvents?.map((e: any) => Number(e.toString())) 
+      });
+    } catch (queryErr) {
+      console.debug("[mintTicket] Could not query admin events:", queryErr);
+    }
+    
+    throw new Error(`On-chain event ${eventId} was not found. Re-register this event on-chain from admin before purchasing.`);
+  }
+
+  if (!eventExists) {
+    throw new Error(`On-chain event ${eventId} was not found. Re-register this event on-chain from admin before purchasing.`);
+  }
 
   const tx = await contract.mintTicket(eventId, recipientAddress, {
-    value: parseEther(price),
+    value: parseEther(normalizedPrice),
   });
 
   const receipt = await tx.wait();
+  if (!receipt || receipt.status !== 1) {
+    throw new Error("Ticket mint transaction failed on-chain.");
+  }
 
   // Extract tokenId from the TicketMinted event log
-  let tokenId = 0;
+  let tokenId: number | null = null;
   if (receipt?.logs) {
     for (const log of receipt.logs) {
       try {
@@ -154,6 +379,10 @@ export async function mintTicket(eventId: number, recipientAddress: string, pric
         }
       } catch { /* skip logs that can't be decoded */ }
     }
+  }
+
+  if (tokenId === null) {
+    throw new Error("Mint transaction confirmed but TicketMinted log was not found. Verify contract address and ABI.");
   }
 
   return { txHash: receipt?.hash || "", tokenId };
@@ -209,9 +438,13 @@ export async function getEventTickets(eventId: number): Promise<number[]> {
  */
 export async function listForResale(tokenId: number, priceInEth: string): Promise<string> {
   const contract = getContract() as any;
+  const normalizedResalePrice = normalizeEthAmount(priceInEth, "Resale price");
 
-  const tx = await contract.listForResale(BigInt(tokenId), parseEther(priceInEth));
+  const tx = await contract.listForResale(BigInt(tokenId), parseEther(normalizedResalePrice));
   const receipt = await tx.wait();
+  if (!receipt || receipt.status !== 1) {
+    throw new Error("List for resale transaction failed on-chain.");
+  }
   return receipt?.hash || "";
 }
 
@@ -231,12 +464,16 @@ export async function cancelResale(tokenId: number): Promise<string> {
  */
 export async function buyFromResale(tokenId: number, price: string): Promise<string> {
   const contract = getContract() as any;
+  const normalizedPrice = normalizeEthAmount(price, "Resale price");
 
   const tx = await contract.buyFromResale(BigInt(tokenId), {
-    value: parseEther(price),
+    value: parseEther(normalizedPrice),
   });
 
   const receipt = await tx.wait();
+  if (!receipt || receipt.status !== 1) {
+    throw new Error("Resale purchase transaction failed on-chain.");
+  }
   return receipt?.hash || "";
 }
 
@@ -251,25 +488,11 @@ export async function getResaleOffer(tokenId: number) {
 // ============ Admin Functions ============
 
 /**
- * Withdraw platform fees (owner only)
+ * Get platform fee percentage
  */
-export async function withdrawPlatformFees(): Promise<string> {
+export async function getPlatformFeePercentage(): Promise<number> {
   const contract = getContract();
-
-  const tx = await contract.withdrawPlatformFees();
-  const receipt = await tx.wait();
-  return receipt?.hash || "";
-}
-
-/**
- * Set platform fee percentage (owner only)
- */
-export async function setPlatformFeePercentage(percentage: number): Promise<string> {
-  const contract = getContract();
-
-  const tx = await contract.setPlatformFeePercentage(percentage);
-  const receipt = await tx.wait();
-  return receipt?.hash || "";
+  return await contract.platformFeePercentage();
 }
 
 /**
@@ -277,20 +500,11 @@ export async function setPlatformFeePercentage(percentage: number): Promise<stri
  */
 export async function getContractBalance() {
   const contract = getContract();
-  const { totalBalance, feesCollected } = await contract.getContractBalance();
-
+  const [totalBalance, feesCollected] = await contract.getContractBalance();
   return {
     totalBalance: totalBalance.toString(),
     feesCollected: feesCollected.toString(),
   };
-}
-
-/**
- * Get platform fee percentage
- */
-export async function getPlatformFeePercentage(): Promise<number> {
-  const contract = getContract();
-  return await contract.platformFeePercentage();
 }
 
 // ============ Utility Functions ============

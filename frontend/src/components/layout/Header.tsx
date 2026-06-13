@@ -24,10 +24,10 @@ export const Header = () => {
           <Link to="/" className="flex items-center gap-2.5 group">
             <img
               src="/logo.svg"
-              alt="FairPass logo"
+              alt="TicketShield logo"
               className="w-8 h-8 drop-shadow-lg group-hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.6)] transition-[filter]"
             />
-            <span className="text-lg font-bold gradient-text hidden sm:block">FairPass</span>
+            <span className="text-lg font-bold gradient-text hidden sm:block">TicketShield</span>
           </Link>
         </div>
 

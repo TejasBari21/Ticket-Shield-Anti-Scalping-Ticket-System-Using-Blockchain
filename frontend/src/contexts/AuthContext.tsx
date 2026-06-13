@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import type { Session } from "@supabase/supabase-js";
 
 const ADMIN_EMAIL: string =
-  (import.meta.env.VITE_ADMIN_EMAIL as string | undefined) ?? "adminfairpass@gmail.com";
+  (import.meta.env.VITE_ADMIN_EMAIL as string | undefined) ?? "adminshield@gmail.com";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -17,16 +17,14 @@ export interface AppUser {
 
 interface SignUpResult {
   user: AppUser;
-  /** True when the Supabase project requires email confirmation before the session is active. */
+  /** True when email confirmation is needed before the account is active. */
   needsEmailConfirmation: boolean;
 }
 
 interface AuthContextType {
-  /** Raw Supabase session — null when logged out. */
-  session: Session | null;
-  /** Enriched user object (with role + wallet) derived from the session. */
+  /** Enriched user object (with role + wallet). */
   appUser: AppUser | null;
-  /** True while the initial session is being fetched from Supabase on app load. */
+  /** True while the initial session is being fetched on app load. */
   sessionLoading: boolean;
   signIn: (email: string, password: string) => Promise<AppUser>;
   signUp: (email: string, password: string) => Promise<SignUpResult>;
@@ -38,7 +36,6 @@ interface AuthContextType {
 // ── Context ───────────────────────────────────────────────────────────────────
 
 const AuthContext = createContext<AuthContextType>({
-  session: null,
   appUser: null,
   sessionLoading: true,
   signIn: async () => {
@@ -55,164 +52,153 @@ export const useAuth = () => useContext(AuthContext);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-async function fetchUserRecord(
-  userId: string,
-): Promise<{ role: string; wallet_address: string | null }> {
-  try {
-    const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
-    const query = supabase
-      .from("users")
-      .select("role, wallet_address")
-      .eq("user_id", userId)
-      .single()
-      .then(({ data }) => data);
-    const data = await Promise.race([query, timeout]);
-    return { role: data?.role ?? "user", wallet_address: data?.wallet_address ?? null };
-  } catch {
-    return { role: "user", wallet_address: null };
-  }
+function isAdminEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 }
 
-function buildAppUser(
-  userId: string,
-  email: string,
-  role: string,
-  walletAddress: string | null,
-): AppUser {
+function buildAppUser(user: User): AppUser {
+  const walletAddress =
+    typeof user.user_metadata?.walletAddress === "string"
+      ? user.user_metadata.walletAddress
+      : null;
+
+  const email = user.email ?? "";
   return {
-    id: userId,
+    id: user.id,
     email,
-    roles: role === "admin" ? ["admin"] : [],
-    walletAddress,
+    roles: isAdminEmail(email) ? ["admin"] : [],
+    walletAddress: walletAddress || null,
   };
 }
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<Session | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
 
-  /** Determine role instantly from email (no DB needed), then optionally refresh from DB. */
-  const quickBuildUser = (s: Session): AppUser =>
-    buildAppUser(
-      s.user.id,
-      s.user.email ?? "",
-      (s.user.email ?? "").toLowerCase() === ADMIN_EMAIL.toLowerCase() ? "admin" : "user",
-      null,
-    );
-
-  /** Hydrate from DB in the background and update appUser if role/wallet differ. */
-  const hydrateUserFromDB = (s: Session) => {
-    fetchUserRecord(s.user.id).then(({ role, wallet_address }) => {
-      setAppUser((prev) =>
-        prev ? { ...prev, roles: role === "admin" ? ["admin"] : [], walletAddress: wallet_address } : prev,
-      );
-    });
-  };
-
+  /** Restore session from Supabase and subscribe to auth state changes. */
   useEffect(() => {
-    // 1. Restore persisted session on app load syncronously from localStorage cache
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        setSession(session);
-        if (session) {
-          const user = quickBuildUser(session);
-          setAppUser(user);
-          hydrateUserFromDB(session);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setSessionLoading(false));
+    let active = true;
+    let timeoutId: NodeJS.Timeout | null = null;
 
-    // 2. React to future auth changes (login, logout, token refresh)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        // Set user immediately from session data — no DB wait
-        const user = quickBuildUser(session);
-        setAppUser(user);
+    const bootstrap = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!active) return;
+        setAppUser(session?.user ? buildAppUser(session.user) : null);
         setSessionLoading(false);
-        // Refresh role/wallet from DB in the background
-        hydrateUserFromDB(session);
-      } else {
-        setAppUser(null);
+
+        if (timeoutId) clearTimeout(timeoutId);
+      } catch (error) {
+        // If session fetch fails, just set loading to false and continue
+        console.warn("[Auth] Failed to restore session:", error);
+        if (active) {
+          setAppUser(null);
+          setSessionLoading(false);
+        }
+      }
+    };
+
+    // Set a timeout to prevent the loading spinner from showing forever
+    timeoutId = setTimeout(() => {
+      if (active) {
+        console.warn("[Auth] Session restore timeout - proceeding without session");
         setSessionLoading(false);
       }
-    });
+    }, 5000); // 5 second timeout
 
-    return () => subscription.unsubscribe();
+    void bootstrap();
+
+    let subscription;
+    try {
+      const {
+        data: { subscription: sub },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (!active) return;
+        setAppUser(session?.user ? buildAppUser(session.user) : null);
+        setSessionLoading(false);
+        if (timeoutId) clearTimeout(timeoutId);
+      });
+      subscription = sub;
+    } catch (error) {
+      console.warn("[Auth] Failed to subscribe to auth state:", error);
+    }
+
+    return () => {
+      active = false;
+      if (timeoutId) clearTimeout(timeoutId);
+      subscription?.unsubscribe();
+    };
   }, []);
 
   // ── Auth actions ────────────────────────────────────────────────────────────
 
   const signIn = async (email: string, password: string): Promise<AppUser> => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.toLowerCase().trim(),
-      password: password.trim(),
-    });
-    if (error) throw new Error(error.message);
-    if (!data.user || !data.session) throw new Error("Login failed. Please try again.");
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
+        password: password.trim(),
+      });
 
-    // Build the AppUser immediately from session data — no extra DB round-trip.
-    // onAuthStateChange fires in parallel and will refresh role/wallet from DB.
-    const role = (data.user.email ?? "").toLowerCase() === ADMIN_EMAIL.toLowerCase() ? "admin" : "user";
-    const user = buildAppUser(data.user.id, data.user.email ?? "", role, null);
-    setSession(data.session);
-    setAppUser(user);
-    return user;
+      if (error) throw new Error(error.message);
+      if (!data.user) throw new Error("Login failed. Please try again.");
+
+      const user = buildAppUser(data.user);
+      setAppUser(user);
+      return user;
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "Login failed. Please try again.");
+    }
   };
 
   const signUp = async (email: string, password: string): Promise<SignUpResult> => {
-    const normalizedEmail = email.toLowerCase().trim();
-    const { data, error } = await supabase.auth.signUp({ email: normalizedEmail, password });
-    if (error) throw new Error(error.message);
-    if (!data.user) throw new Error("Signup failed. Please try again.");
+    try {
+      const normalizedEmail = email.toLowerCase().trim();
 
-    const role = normalizedEmail === ADMIN_EMAIL.toLowerCase() ? "admin" : "user";
+      const { data, error } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password: password.trim(),
+      });
 
-    // Insert profile row — upsert handles any post-signup triggers that may have already created it
-    // Non-fatal: if the table doesn't exist yet the Auth user is still created successfully
-    await supabase.from("users").upsert(
-      { user_id: data.user.id, email: normalizedEmail, wallet_address: null, role },
-      { onConflict: "user_id" },
-    );
+      if (error) throw new Error(error.message);
+      if (!data.user) throw new Error("Signup failed. Please try again.");
 
-    const user = buildAppUser(data.user.id, normalizedEmail, role, null);
-    const needsEmailConfirmation = !data.session;
+      const user = buildAppUser(data.user);
+      const needsEmailConfirmation = !data.session;
+      setAppUser(needsEmailConfirmation ? null : user);
 
-    if (data.session) {
-      setSession(data.session);
-      setAppUser(user);
+      return { user, needsEmailConfirmation };
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "Signup failed. Please try again.");
     }
-
-    return { user, needsEmailConfirmation };
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setSession(null);
     setAppUser(null);
   };
 
   const updateWalletAddress = async (walletAddress: string) => {
-    if (!session?.user) return;
-    const { error } = await supabase
-      .from("users")
-      .update({ wallet_address: walletAddress })
-      .eq("user_id", session.user.id);
-    if (!error) {
+    if (!appUser) return;
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { walletAddress },
+      });
+      if (error) throw error;
       setAppUser((prev) => (prev ? { ...prev, walletAddress } : null));
+    } catch (error) {
+      console.error("Failed to update wallet address:", error);
     }
   };
 
   return (
     <AuthContext.Provider
-      value={{ session, appUser, sessionLoading, signIn, signUp, signOut, updateWalletAddress }}
+      value={{ appUser, sessionLoading, signIn, signUp, signOut, updateWalletAddress }}
     >
       {children}
     </AuthContext.Provider>

@@ -1,4 +1,7 @@
 import hre from "hardhat";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 async function main() {
   console.log("Deploying EventTicket contract...");
@@ -6,8 +9,16 @@ async function main() {
   // Get the contract factory
   const EventTicket = await hre.ethers.getContractFactory("EventTicket");
 
+  const [deployer] = await hre.ethers.getSigners();
+  const configuredAdminWallet =
+    process.env.ADMIN_PAYOUT_ADDRESS ||
+    process.env.VITE_ADMIN_ADDRESS ||
+    deployer.address;
+
+  console.log(`Payout wallet: ${configuredAdminWallet}`);
+
   // Deploy the contract
-  const contract = await EventTicket.deploy();
+  const contract = await EventTicket.deploy(configuredAdminWallet);
 
   // Wait for deployment
   await contract.waitForDeployment();
@@ -23,15 +34,16 @@ async function main() {
   console.log("\n📋 Contract Details:");
   const platformFee = await contract.platformFeePercentage();
   console.log(`Platform Fee: ${platformFee}%`);
+  console.log(`Payout Wallet: ${await contract.payoutWallet()}`);
 
   // Print verification command
-  const [deployer] = await hre.ethers.getSigners();
   console.log(`\n🔐 Deployed by: ${deployer.address}`);
 
   // Save deployment info to file
   const deploymentInfo = {
     address,
     deployer: deployer.address,
+    payoutWallet: await contract.payoutWallet(),
     network: hre.network.name,
     timestamp: new Date().toISOString(),
   };

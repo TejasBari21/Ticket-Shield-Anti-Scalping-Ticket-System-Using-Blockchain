@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TicketShield Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-container": "#d6a9ff",
+              "secondary-fixed-dim": "#ddb7ff",
+              "primary-fixed-dim": "#cbbeff",
+              "on-secondary-fixed": "#2c0051",
+              "tertiary-fixed": "#63f7ff",
+              "surface-variant": "#343440",
+              "tertiary": "#00dce5",
+              "inverse-surface": "#e3e0f1",
+              "inverse-primary": "#632ef6",
+              "surface-container-low": "#1b1a26",
+              "outline-variant": "#484456",
+              "surface-container-lowest": "#0d0d18",
+              "secondary-fixed": "#f0dbff",
+              "primary-fixed": "#e6deff",
+              "inverse-on-surface": "#302f3b",
+              "on-tertiary": "#003739",
+              "error-container": "#93000a",
+              "tertiary-container": "#007378",
+              "on-primary-fixed-variant": "#4b00d4",
+              "on-tertiary-fixed": "#002021",
+              "outline": "#938ea2",
+              "primary": "#cbbeff",
+              "surface-tint": "#cbbeff",
+              "secondary-container": "#6f00be",
+              "primary-container": "#6c3bff",
+              "on-surface": "#e3e0f1",
+              "surface-dim": "#12121d",
+              "on-secondary-fixed-variant": "#6900b3",
+              "on-secondary": "#490080",
+              "tertiary-fixed-dim": "#00dce5",
+              "surface-container-high": "#292935",
+              "on-error-container": "#ffdad6",
+              "background": "#12121d",
+              "on-background": "#e3e0f1",
+              "on-error": "#690005",
+              "error": "#ffb4ab",
+              "surface": "#12121d",
+              "on-tertiary-container": "#87f8ff",
+              "on-surface-variant": "#cac3d9",
+              "on-primary": "#330098",
+              "surface-container-highest": "#343440",
+              "surface-container": "#1f1e2a",
+              "on-primary-fixed": "#1d0061",
+              "surface-bright": "#383845",
+              "secondary": "#ddb7ff",
+              "on-primary-container": "#eae2ff",
+              "on-tertiary-fixed-variant": "#004f53"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      body { background-color: #0d0d18; }
+      .glass-card {
+        background: rgba(52, 52, 64, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(72, 68, 86, 0.15);
+      }
+      .sovereign-gradient {
+        background: linear-gradient(135deg, #6c3bff 0%, #ddb7ff 100%);
+      }
+      .glow-border {
+        box-shadow: inset 0.5px 0.5px 0px 0px rgba(203, 190, 255, 0.3);
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body text-on-surface min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-50 glass-card px-6 py-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container">user_attributes</span>
+</div>
+<h1 class="font-headline text-xl font-extrabold tracking-tight">TicketShield</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</button>
+</header>
+<main class="max-w-7xl mx-auto px-6 py-8">
+<!-- Hero Section / Identity -->
+<div class="mb-12">
+<p class="font-label text-sm uppercase tracking-widest text-on-surface-variant mb-2">Vault Overview</p>
+<h2 class="font-headline text-4xl md:text-5xl font-extrabold text-on-surface leading-tight">Digital Ledger Control</h2>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
+<!-- Quick Actions - Vertical Sidebar Style inside Grid -->
+<div class="md:col-span-4 lg:col-span-2 space-y-4">
+<div class="glass-card rounded-xl p-6 glow-border">
+<h3 class="font-headline text-lg mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">bolt</span> Quick Actions
+                    </h3>
+<div class="space-y-3">
+<button class="w-full sovereign-gradient text-on-primary-fixed font-bold py-4 px-6 rounded-xl flex items-center justify-between group transition-all">
+<span>Create Event</span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">add_circle</span>
+</button>
+<button class="w-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface py-4 px-6 rounded-xl flex items-center justify-between transition-all outline outline-1 outline-outline-variant/15">
+<span>Generate Tickets</span>
+<span class="material-symbols-outlined">confirmation_number</span>
+</button>
+<button class="w-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface py-4 px-6 rounded-xl flex items-center justify-between transition-all outline outline-1 outline-outline-variant/15">
+<span>Scan Logs</span>
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="w-full bg-error-container/20 hover:bg-error-container/30 text-error py-4 px-6 rounded-xl flex items-center justify-between transition-all outline outline-1 outline-error/20">
+<span class="font-semibold">Fraud Alerts</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">warning</span>
+</button>
+</div>
+</div>
+<!-- Live Status Chip Area -->
+<div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
+<div class="flex items-center justify-between mb-4">
+<span class="text-xs font-label uppercase text-on-surface-variant">System Health</span>
+<div class="flex items-center gap-2 px-3 py-1 bg-tertiary-container rounded-full">
+<div class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></div>
+<span class="text-[10px] font-bold text-on-tertiary-container">ACTIVE</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-sm">
+<span class="text-on-surface-variant">Node Latency</span>
+<span class="font-mono text-tertiary">24ms</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-tertiary h-full w-[85%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Visualization Main Cards -->
+<div class="md:col-span-4 lg:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Large Stats Card: Tickets Sold -->
+<div class="glass-card rounded-xl p-8 glow-border relative overflow-hidden group">
+<div class="relative z-10">
+<p class="font-label text-xs uppercase text-on-surface-variant mb-1">Total Assets Issued</p>
+<h3 class="font-headline text-5xl font-extrabold mb-4">12,482</h3>
+<div class="flex items-center gap-2 text-tertiary">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span class="text-xs font-bold">+12% from last week</span>
+</div>
+</div>
+<!-- Abstract Background Visualization -->
+<div class="absolute bottom-0 right-0 w-32 h-32 opacity-10 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[120px] text-primary">analytics</span>
+</div>
+</div>
+<!-- Large Stats Card: Scanned -->
+<div class="glass-card rounded-xl p-8 glow-border relative overflow-hidden group">
+<div class="relative z-10">
+<p class="font-label text-xs uppercase text-on-surface-variant mb-1">Entrance Velocity</p>
+<h3 class="font-headline text-5xl font-extrabold mb-4">8,901</h3>
+<div class="flex items-center gap-2 text-secondary">
+<span class="material-symbols-outlined text-sm">sensors</span>
+<span class="text-xs font-bold">71% Check-in Rate</span>
+</div>
+</div>
+<div class="absolute bottom-0 right-0 w-32 h-32 opacity-10 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[120px] text-secondary">qr_code_2</span>
+</div>
+</div>
+<!-- Security Monitor Card -->
+<div class="md:col-span-2 bg-surface-container-high rounded-xl p-8 outline outline-1 outline-outline-variant/15 relative">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h4 class="font-headline text-xl font-bold">Fraud Suppression</h4>
+<p class="text-on-surface-variant text-sm">Real-time duplicate attempt monitoring</p>
+</div>
+<div class="text-right">
+<span class="text-2xl font-extrabold text-error">42</span>
+<p class="text-[10px] font-label uppercase text-on-surface-variant">Blocked Attacks</p>
+</div>
+</div>
+<!-- Faux Chart Bars -->
+<div class="flex items-end gap-3 h-32">
+<div class="flex-1 bg-surface-container-highest rounded-t-lg transition-all hover:bg-primary/40 h-[40%]"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-lg transition-all hover:bg-primary/40 h-[60%]"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-lg transition-all hover:bg-primary/40 h-[30%]"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-lg transition-all hover:bg-primary/40 h-[85%]"></div>
+<div class="flex-1 bg-error/40 rounded-t-lg transition-all h-[100%] animate-pulse"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-lg transition-all hover:bg-primary/40 h-[50%]"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-lg transition-all hover:bg-primary/40 h-[70%]"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-lg transition-all hover:bg-primary/40 h-[45%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Activity Ledger -->
+<section class="mt-12">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-headline text-2xl font-bold">Live Transaction Ledger</h3>
+<button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+                    View Full Audit Log <span class="material-symbols-outlined text-sm">open_in_new</span>
+</button>
+</div>
+<div class="glass-card rounded-xl overflow-hidden glow-border">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-highest/30">
+<th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant">Asset ID</th>
+<th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant">Event Name</th>
+<th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant">Status</th>
+<th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant text-right">Timestamp</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5 font-mono text-sm text-primary">#SHIELD-0921-XF</td>
+<td class="px-6 py-5 font-bold">Midnight Gala 2024</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-tertiary-container/20 text-tertiary rounded-full text-xs font-bold border border-tertiary/20">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Verified
+                                    </span>
+</td>
+<td class="px-6 py-5 text-right text-on-surface-variant text-sm">2 mins ago</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5 font-mono text-sm text-primary">#SHIELD-0922-RT</td>
+<td class="px-6 py-5 font-bold">Tech Summit: Web3</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary-container/20 text-secondary rounded-full text-xs font-bold border border-secondary/20">
+<span class="material-symbols-outlined text-[14px]">confirmation_number</span> Issued
+                                    </span>
+</td>
+<td class="px-6 py-5 text-right text-on-surface-variant text-sm">14 mins ago</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5 font-mono text-sm text-primary">#SHIELD-0845-ZQ</td>
+<td class="px-6 py-5 font-bold">Midnight Gala 2024</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-error-container/20 text-error rounded-full text-xs font-bold border border-error/20">
+<span class="material-symbols-outlined text-[14px]">block</span> Rejected
+                                    </span>
+</td>
+<td class="px-6 py-5 text-right text-on-surface-variant text-sm">28 mins ago</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-outline-variant/10 px-4 py-3">
+<div class="max-w-md mx-auto flex justify-between items-center">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-[10px] font-bold">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">confirmation_number</span>
+<span class="text-[10px] font-bold">Tickets</span>
+</a>
+<div class="-mt-8">
+<button class="sovereign-gradient w-14 h-14 rounded-full shadow-lg shadow-primary/20 flex items-center justify-center border-4 border-surface">
+<span class="material-symbols-outlined text-on-primary-fixed text-3xl font-bold">qr_code_scanner</span>
+</button>
+</div>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">event</span>
+<span class="text-[10px] font-bold">Events</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-bold">Profile</span>
+</a>
+</div>
+</nav>
+<!-- Accessibility Overlay for Background Contrast -->
+<div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+<div class="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/10 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-secondary/10 blur-[100px] rounded-full"></div>
+</div>
+</body></html>

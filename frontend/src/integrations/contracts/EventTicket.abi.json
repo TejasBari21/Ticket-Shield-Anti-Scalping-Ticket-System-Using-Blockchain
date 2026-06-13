@@ -1,6 +1,12 @@
 [
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_payoutWallet",
+        "type": "address"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
@@ -115,6 +121,25 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "address",
+        "name": "previousWallet",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newWallet",
+        "type": "address"
+      }
+    ],
+    "name": "PayoutWalletUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
@@ -177,6 +202,25 @@
       }
     ],
     "name": "ResaleOffered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "eventId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "maxResalePrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "ResalePriceLimitUpdated",
     "type": "event"
   },
   {
@@ -404,6 +448,11 @@
         "internalType": "uint256",
         "name": "_basePrice",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxResalePrice",
+        "type": "uint256"
       }
     ],
     "name": "createEvent",
@@ -470,6 +519,11 @@
       {
         "internalType": "uint256",
         "name": "basePrice",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxResalePrice",
         "type": "uint256"
       },
       {
@@ -578,6 +632,11 @@
           {
             "internalType": "uint256",
             "name": "basePrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxResalePrice",
             "type": "uint256"
           },
           {
@@ -966,6 +1025,19 @@
   },
   {
     "inputs": [],
+    "name": "payoutWallet",
+    "outputs": [
+      {
+        "internalType": "address payable",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "platformBalance",
     "outputs": [
       {
@@ -1117,11 +1189,29 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_percentage",
+        "name": "_eventId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxPrice",
         "type": "uint256"
       }
     ],
-    "name": "setPlatformFeePercentage",
+    "name": "setMaxResalePrice",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newPayoutWallet",
+        "type": "address"
+      }
+    ],
+    "name": "setPayoutWallet",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1308,13 +1398,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "withdrawPlatformFees",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

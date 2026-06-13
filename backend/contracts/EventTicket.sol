@@ -31,6 +31,7 @@ contract EventTicket is ERC721, Ownable, ReentrancyGuard {
         uint256 totalCapacity;
         uint256 ticketsSold;
         uint256 basePrice;
+        uint256 maxResalePrice; // Max allowed resale price (0 = no limit)
         bool cancelled;
         uint256 createdAt;
     }
@@ -64,8 +65,13 @@ contract EventTicket is ERC721, Ownable, ReentrancyGuard {
     string private _baseTokenURI;
 
     // Fee structure
-    uint256 public platformFeePercentage = 5; // 5% platform fee
+    // All ticket sale proceeds go directly to the contract owner (admin)
+    // Fee state kept for ABI compatibility (fees are 0 – admin receives payments directly)
+    uint256 public platformFeePercentage = 0;
     uint256 public platformBalance = 0;
+
+    // Explicit wallet that receives primary ticket sale proceeds.
+    address payable public payoutWallet;
 
     // Events
     event EventCreated(
@@ -104,6 +110,13 @@ contract EventTicket is ERC721, Ownable, ReentrancyGuard {
 
     event ResaleOfferCancelled(uint256 indexed tokenId);
 
+    event ResalePriceLimitUpdated(
+        uint256 indexed eventId,
+        uint256 maxResalePrice
+    );
+
+    event PayoutWalletUpdated(address indexed previousWallet, address indexed newWallet);
+
     // Modifiers
     modifier eventExists(uint256 _eventId) {
         require(_eventId < eventIdCounter.current(), "Event does not exist");
@@ -131,7 +144,10 @@ contract EventTicket is ERC721, Ownable, ReentrancyGuard {
     }
 
     // Constructor
-    constructor() ERC721("FairPass Ticket", "TICKET") {}
+    constructor(address _payoutWallet) ERC721("TicketShield Ticket", "TICKET") {
+        require(_payoutWallet != address(0), "Invalid payout wallet");
+        payoutWallet = payable(_payoutWallet);
+    }
 
     // ============ Event Management ============
 
@@ -144,7 +160,8 @@ contract EventTicket is ERC721, Ownable, ReentrancyGuard {
         uint256 _eventDate,
         string memory _location,
         uint256 _capacity,
-        uint256 _basePrice
+        uint256 _basePrice,
+        uint256 _maxResalePrice
     ) public returns (uint256) {
         require(_eventDate > block.timestamp, "Event date must be in the future");
         require(_capacity > 0, "Capacity must be greater than 0");
@@ -163,6 +180,7 @@ contract EventTicket is ERC721, Ownable, ReentrancyGuard {
             totalCapacity: _capacity,
             ticketsSold: 0,
             basePrice: _basePrice,
+            maxResalePrice: _maxResalePrice,
             cancelled: false,
             createdAt: block.timestamp
         });
@@ -183,6 +201,18 @@ contract EventTicket is ERC721, Ownable, ReentrancyGuard {
     {
         require(!events[_eventId].cancelled, "Event already cancelled");
         events[_eventId].cancelled = true;
+    }
+
+    /**
+     * @dev Update max resale price limit (organizer only)
+     */
+    function setMaxResalePrice(uint256 _eventId, uint256 _maxPrice)
+        public
+        eventExists(_eventId)
+        onlyEventOrganizer(_eventId)
+    {
+        events[_eventId].maxResalePrice = _maxPrice;
+        emit ResalePriceLimitUpdated(_eventId, _maxPrice);
     }
 
     /**
@@ -234,22 +264,11 @@ contract EventTicket is ERC721, Ownable, ReentrancyGuard {
         eventData.ticketsSold++;
         userTickets[_to].push(tokenId);
 
-        // Handle payment
-        uint256 fee = (msg.value * platformFeePercentage) / 100;
-        uint256 organizerPayment = msg.value - fee;
-        platformBalance += fee;
-
-        // Transfer payment to organizer
-        (bool success, ) = eventData.organizer.call{value: organizerPayment}("");
+        // Forward full user payment directly to configured admin payout wallet.
+        (bool success, ) = payoutWallet.call{value: msg.value}("");
         require(success, "Payment transfer failed");
 
-        // Refund excess payment
-        if (msg.value > eventData.basePrice) {
-            (bool refundSuccess, ) = msg.sender.call{value: msg.value - eventData.basePrice}("");
-            require(refundSuccess, "Refund failed");
-        }
-
-        emit TicketMinted(tokenId, _eventId, _to, eventData.basePrice);
+        emit TicketMinted(tokenId, _eventId, _to, msg.value);
         return tokenId;
     }
 
@@ -310,11 +329,19 @@ contract EventTicket is ERC721, Ownable, ReentrancyGuard {
         ticketExists(_tokenId)
         onlyTicketOwner(_tokenId)
     {
+        Ticket storage ticket = tickets[_tokenId];
+        Event storage eventData = events[ticket.eventId];
+        
         require(_price > 0, "Price must be greater than 0");
-        require(!tickets[_tokenId].checkedIn, "Cannot resale checked-in ticket");
+        require(!ticket.checkedIn, "Cannot resale checked-in ticket");
+        
+        // Check max resale price limit (if set)
+        if (eventData.maxResalePrice > 0) {
+            require(_price <= eventData.maxResalePrice, "Resale price exceeds organizer limit");
+        }
 
-        tickets[_tokenId].isForSale = true;
-        tickets[_tokenId].resalePrice = _price;
+        ticket.isForSale = true;
+        ticket.resalePrice = _price;
 
         resaleOffers[_tokenId] = ResaleOffer({
             tokenId: _tokenId,
@@ -362,9 +389,7 @@ contract EventTicket is ERC721, Ownable, ReentrancyGuard {
         address seller = offer.seller;
 
         // Calculate fees
-        uint256 fee = (msg.value * platformFeePercentage) / 100;
-        uint256 sellerPayment = msg.value - fee;
-        platformBalance += fee;
+        uint256 sellerPayment = msg.value;
 
         // Update ticket
         ticket.isForSale = false;
@@ -461,48 +486,35 @@ contract EventTicket is ERC721, Ownable, ReentrancyGuard {
     // ============ Admin Functions ============
 
     /**
+     * @dev Update the wallet that receives primary ticket sale proceeds.
+     */
+    function setPayoutWallet(address _newPayoutWallet) public onlyOwner {
+        require(_newPayoutWallet != address(0), "Invalid payout wallet");
+        address previousWallet = payoutWallet;
+        payoutWallet = payable(_newPayoutWallet);
+        emit PayoutWalletUpdated(previousWallet, _newPayoutWallet);
+    }
+
+    /**
      * @dev Withdraw platform fees
      */
-    function withdrawPlatformFees()
-        public
-        onlyOwner
-        nonReentrant
-    {
-        uint256 amount = platformBalance;
-        require(amount > 0, "No fees to withdraw");
-
-        platformBalance = 0;
-
-        (bool success, ) = owner().call{value: amount}("");
-        require(success, "Withdrawal failed");
-    }
-
-    /**
-     * @dev Set platform fee percentage
-     */
-    function setPlatformFeePercentage(uint256 _percentage)
-        public
-        onlyOwner
-    {
-        require(_percentage <= 20, "Fee cannot exceed 20%");
-        platformFeePercentage = _percentage;
-    }
-
-    /**
-     * @dev Get contract balance information
-     */
-    function getContractBalance()
-        public
-        view
-        returns (uint256 totalBalance, uint256 feesCollected)
-    {
-        return (address(this).balance, platformBalance);
-    }
 
     // ============ Helper Functions ============
 
     /**
      * @dev Check if a token exists
+        /**
+         * @dev Get contract balance information
+         */
+        function getContractBalance()
+            public
+            view
+            returns (uint256 totalBalance, uint256 feesCollected)
+        {
+            return (address(this).balance, platformBalance);
+        }
+
+        /**
      */
     function _exists(uint256 tokenId) internal view override returns (bool) {
         try this.ownerOf(tokenId) returns (address) {
@@ -619,7 +631,7 @@ contract EventTicket is ERC721, Ownable, ReentrancyGuard {
             '<rect width="500" height="250" rx="16" fill="#0a0a1a"/>',
             '<rect x="1.5" y="1.5" width="497" height="247" rx="15" fill="none" stroke="#6366f1" stroke-width="1.5"/>',
             '<rect x="0" y="0" width="500" height="5" rx="2" fill="#6366f1"/>',
-            '<text x="24" y="48" font-family="monospace" font-size="11" fill="#818cf8">FAIRPASS NFT TICKET</text>',
+            '<text x="24" y="48" font-family="monospace" font-size="11" fill="#818cf8">TICKETSHIELD NFT TICKET</text>',
             '<text x="24" y="80" font-family="Arial,sans-serif" font-size="20" font-weight="bold" fill="white">', evt.name, '</text>',
             '<text x="24" y="106" font-family="Arial,sans-serif" font-size="13" fill="#a78bfa">', evt.location, '</text>',
             '<rect x="378" y="22" width="98" height="32" rx="6" fill="#1e1b4b"/>',
@@ -629,7 +641,7 @@ contract EventTicket is ERC721, Ownable, ReentrancyGuard {
             '<text x="24" y="176" font-family="monospace" font-size="10" fill="#4b5563">STANDARD: ERC-721</text>',
             '<rect x="374" y="148" width="102" height="28" rx="14" fill="', statusBg, '"/>',
             '<text x="425" y="167" font-family="Arial,sans-serif" font-size="11" fill="', statusColor, '" text-anchor="middle">', statusLabel, '</text>',
-            '<text x="24" y="232" font-family="monospace" font-size="9" fill="#374151">Powered by FairPass Protocol | ERC-721</text>',
+            '<text x="24" y="232" font-family="monospace" font-size="9" fill="#374151">Powered by TicketShield Protocol | ERC-721</text>',
             '</svg>'
         ));
 
@@ -650,7 +662,7 @@ contract EventTicket is ERC721, Ownable, ReentrancyGuard {
         // ---- Assemble metadata JSON ----
         string memory tokenName = string(abi.encodePacked(evt.name, " #", tokenId.toString()));
         string memory description = string(abi.encodePacked(
-            "FairPass NFT Ticket for ", evt.name, ". Venue: ", evt.location, "."
+            "TicketShield NFT Ticket for ", evt.name, ". Venue: ", evt.location, "."
         ));
 
         string memory json = Base64.encode(bytes(string(abi.encodePacked(

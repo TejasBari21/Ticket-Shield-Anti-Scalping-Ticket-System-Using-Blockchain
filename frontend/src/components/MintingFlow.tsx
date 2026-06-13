@@ -23,6 +23,7 @@ export interface MintResult {
   tierPrice: number;
   qty: number;
   blockNumber: number;
+  eventImageUrl?: string | null;
   tickets: Array<{
     id: string;
     tokenId: string;
@@ -107,8 +108,7 @@ export default function MintingFlow({
   const ticket = mintResult?.tickets[0];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)" }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
       <AnimatePresence mode="wait">
 
         {/* ══════════════════════════════════════════════════════════
@@ -122,43 +122,38 @@ export default function MintingFlow({
             transition={{ duration: 0.3 }}
             className="w-full max-w-sm"
           >
-            <div className="relative rounded-2xl border border-primary/30 overflow-hidden"
-              style={{ background: "linear-gradient(135deg, #080516 0%, #100626 60%, #080516 100%)" }}>
-              {/* Inner glow */}
-              <div className="absolute inset-0 rounded-2xl pointer-events-none"
-                style={{ boxShadow: "0 0 80px rgba(124,58,237,0.18) inset" }} />
-
+            <div className="relative rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
               <div className="relative p-8 flex flex-col items-center gap-7">
                 {/* Animated wallet ring */}
                 <div className="relative flex items-center justify-center">
-                  <div className="w-22 h-22 w-[88px] h-[88px] rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center">
-                    <Wallet className="h-9 w-9 text-primary" />
+                  <div className="w-[88px] h-[88px] rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center shadow-lg shadow-primary/10">
+                    <Wallet className="h-9 w-9 text-[#1BA6A6]" />
                   </div>
                   {/* Spinning arc */}
-                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin"
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#1BA6A6] animate-spin"
                     style={{ animationDuration: "1s" }} />
                   {/* Pulsing outer ring */}
-                  <div className="absolute -inset-3 rounded-full border border-primary/15 animate-ping"
+                  <div className="absolute -inset-3 rounded-full border border-primary/10 animate-ping"
                     style={{ animationDuration: "2.5s" }} />
                 </div>
 
                 {/* Title + phase text */}
                 <div className="text-center space-y-2">
-                  <h2 className="text-xl font-bold text-white tracking-tight">Processing Payment...</h2>
+                  <h2 className="text-xl font-bold text-foreground tracking-tight">Processing Payment...</h2>
                   <AnimatePresence mode="wait">
                     {phase === "connecting" ? (
                       <motion.div key="conn"
                         initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
                         className="space-y-0.5">
-                        <p className="text-primary font-semibold text-sm">Connecting to Wallet</p>
-                        <p className="text-xs text-muted-foreground">Initializing MetaMask session…</p>
+                      <p className="text-primary font-bold text-sm">Connecting to Wallet</p>
+                        <p className="text-xs text-muted-foreground font-medium">Initializing MetaMask session…</p>
                       </motion.div>
                     ) : (
                       <motion.div key="conf"
                         initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
                         className="space-y-0.5">
-                        <p className="text-amber-400 font-semibold text-sm">Confirm transaction in your wallet.</p>
-                        <p className="text-xs text-muted-foreground">Check your MetaMask popup to continue</p>
+                        <p className="text-amber-500 font-bold text-sm">Confirm transaction in your wallet.</p>
+                        <p className="text-xs text-muted-foreground font-medium">Check your MetaMask popup to continue</p>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -172,14 +167,14 @@ export default function MintingFlow({
                     { label: "Awaiting Signature",     done: false },
                   ].map((s, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <div className={`h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
-                        s.done ? "bg-primary" : "border border-muted/40 bg-muted/10"
+                      <div className={`h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 shadow-sm ${
+                        s.done ? "bg-[#1BA6A6]" : "border border-border bg-muted/50"
                       }`}>
                         {s.done
                           ? <CheckCircle className="h-3.5 w-3.5 text-white" />
                           : <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />}
                       </div>
-                      <span className={`text-sm transition-colors ${s.done ? "text-foreground" : "text-muted-foreground/60"}`}>
+                      <span className={`text-sm transition-colors font-medium ${s.done ? "text-foreground" : "text-muted-foreground/60"}`}>
                         {s.label}
                       </span>
                     </div>
@@ -201,43 +196,16 @@ export default function MintingFlow({
             transition={{ duration: 0.35 }}
             className="w-full max-w-md"
           >
-            <div className="relative rounded-2xl border border-violet-500/40 overflow-hidden"
-              style={{ background: "linear-gradient(135deg, #080516 0%, #0d0a24 50%, #080516 100%)" }}>
-              {/* Violet glow */}
-              <div className="absolute inset-0 pointer-events-none rounded-2xl"
-                style={{ boxShadow: "0 0 100px rgba(139,92,246,0.14) inset" }} />
-
-              {/* Floating node dots (blockchain vibe) */}
-              <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {[
-                  { size: 40, top: "8%",  left: "4%",  delay: 0 },
-                  { size: 24, top: "20%", left: "80%", delay: 0.4 },
-                  { size: 56, top: "55%", left: "12%", delay: 0.8 },
-                  { size: 32, top: "70%", left: "70%", delay: 0.2 },
-                  { size: 20, top: "40%", left: "55%", delay: 0.6 },
-                  { size: 48, top: "85%", left: "35%", delay: 1.0 },
-                ].map((n, i) => (
-                  <div key={i}
-                    className="absolute rounded-full bg-violet-500/[0.07] animate-ping"
-                    style={{
-                      width: n.size, height: n.size,
-                      top: n.top, left: n.left,
-                      animationDelay: `${n.delay}s`,
-                      animationDuration: `${2 + i * 0.4}s`,
-                    }} />
-                ))}
-              </div>
-
+            <div className="relative rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
               <div className="relative p-8 flex flex-col items-center gap-6">
                 {/* Icon */}
                 <div className="relative">
-                  <div className="w-24 h-24 rounded-2xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center"
-                    style={{ boxShadow: "0 0 40px rgba(139,92,246,0.2)" }}>
-                    <Ticket className="h-12 w-12 text-violet-400" />
+                  <div className="w-24 h-24 rounded-2xl bg-[#1BA6A6]/5 border border-[#1BA6A6]/10 flex items-center justify-center shadow-lg shadow-primary/5">
+                    <Ticket className="h-12 w-12 text-[#1BA6A6]" />
                   </div>
-                  <div className="absolute -inset-1 rounded-2xl border border-violet-400/20 animate-pulse" />
+                  <div className="absolute -inset-1 rounded-2xl border border-primary/20 animate-pulse" />
                   <motion.div
-                    className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-primary border border-primary/50 flex items-center justify-center"
+                    className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-[#1BA6A6] border border-white flex items-center justify-center shadow-lg"
                     animate={{ scale: [1, 1.25, 1] }}
                     transition={{ repeat: Infinity, duration: 0.9 }}
                   >
@@ -253,16 +221,16 @@ export default function MintingFlow({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.25 }}
-                      className="text-lg font-bold text-white tracking-tight"
+                      className="text-lg font-bold text-foreground tracking-tight"
                     >
                       {STEP2_MESSAGES[messageIdx]}
                     </motion.h2>
                   </AnimatePresence>
-                  <p className="text-xs text-muted-foreground/70">This may take a few moments</p>
+                  <p className="text-xs text-muted-foreground font-medium tracking-wide">Secure Blockchain Validation</p>
                 </div>
 
                 {/* Progress steps */}
-                <div className="w-full space-y-3">
+                <div className="w-full space-y-3.5">
                   {MINTING_STEPS.map((label, i) => {
                     const done   = mintingProgress > i;
                     const active = mintingProgress === i;
@@ -272,10 +240,10 @@ export default function MintingFlow({
                         <motion.div
                           animate={done ? { scale: [1.3, 1] } : {}}
                           transition={{ duration: 0.3 }}
-                          className={`h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
-                            done   ? "bg-neon-green border-0"
-                            : active ? "bg-primary/30 border border-primary"
-                            :          "bg-muted/15 border border-muted/25"
+                          className={`h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 shadow-sm ${
+                            done   ? "bg-[#1BA6A6] border-0"
+                            : active ? "bg-[#1BA6A6]/10 border border-[#1BA6A6]/30"
+                            :          "bg-[#F5F7F8] border border-border"
                           }`}
                         >
                           {done   ? <CheckCircle className="h-3.5 w-3.5 text-white" />
@@ -284,9 +252,10 @@ export default function MintingFlow({
                         </motion.div>
 
                         {/* Progress bar */}
-                        <div className="flex-1 h-1 rounded-full bg-muted/15 overflow-hidden">
+                        <div className="flex-1 h-1.5 rounded-full bg-[#f0f0f0] overflow-hidden">
                           <motion.div
-                            className={`h-full rounded-full ${done ? "bg-neon-green" : active ? "bg-primary/60" : "bg-transparent"}`}
+                            className={`h-full rounded-full ${done ? "bg-primary" : active ? "bg-primary/50" : "bg-transparent"}`}
+                            style={{ background: done ? "linear-gradient(90deg, #1BA6A6, #7ED4D4)" : undefined }}
                             initial={{ width: "0%" }}
                             animate={{ width: done ? "100%" : active ? "65%" : "0%" }}
                             transition={{ duration: 0.7, ease: "easeOut" }}
@@ -294,12 +263,12 @@ export default function MintingFlow({
                         </div>
 
                         {/* Label */}
-                        <span className={`text-xs w-36 text-right transition-colors ${
-                          done   ? "text-neon-green font-medium"
-                          : active ? "text-primary"
-                          :          "text-muted-foreground/40"
+                        <span className={`text-[11px] w-36 text-right transition-colors uppercase tracking-wider font-bold ${
+                          done   ? "text-primary"
+                          : active ? "text-primary opacity-70"
+                          :          "text-muted-foreground"
                         }`}>
-                          {label}{done ? " ✔" : ""}
+                          {label}
                         </span>
                       </div>
                     );
@@ -307,11 +276,11 @@ export default function MintingFlow({
                 </div>
 
                 {/* Simulated network hash */}
-                <div className="w-full rounded-xl bg-muted/[0.07] border border-white/[0.05] px-4 py-3">
-                  <p className="text-[9px] text-muted-foreground/40 uppercase tracking-widest mb-1.5">Network Activity</p>
+                <div className="w-full rounded-xl bg-muted border border-border px-4 py-3">
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] font-bold mb-1.5">Network Activity</p>
                   <motion.p
-                    className="font-mono text-[11px] text-violet-400/70 truncate"
-                    animate={{ opacity: [0.7, 0.4, 0.7] }}
+                    className="font-mono text-[11px] text-primary/70 truncate"
+                    animate={{ opacity: [0.8, 0.4, 0.8] }}
                     transition={{ repeat: Infinity, duration: 1.8 }}
                   >
                     {networkHash}
@@ -333,51 +302,44 @@ export default function MintingFlow({
             transition={{ duration: 0.4, type: "spring", stiffness: 180 }}
             className="w-full max-w-lg max-h-[92vh] overflow-y-auto"
           >
-            <div className="relative rounded-2xl border border-neon-green/25 overflow-hidden"
-              style={{ background: "linear-gradient(160deg, #080516 0%, #05140b 55%, #080516 100%)" }}>
+            <div className="relative rounded-[2rem] border border-border bg-card shadow-2xl overflow-hidden">
               {/* Top gradient bar */}
-              <div className="h-1 w-full bg-gradient-to-r from-violet-500 via-primary to-neon-green" />
+              <div className="h-1.5 w-full bg-gradient-to-r from-[#1BA6A6] to-[#7ED4D4]" />
 
-              {/* Subtle green glow */}
-              <div className="absolute inset-0 pointer-events-none rounded-2xl"
-                style={{ boxShadow: "0 0 100px rgba(74,222,128,0.06) inset" }} />
-
-              <div className="relative p-6 space-y-5">
+              <div className="relative p-8 space-y-6">
                 {/* ── Header ── */}
-                <div className="text-center space-y-3 pt-2">
+                <div className="text-center space-y-4 pt-2">
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 220, delay: 0.08 }}
-                    className="w-16 h-16 rounded-full bg-neon-green/10 border-2 border-neon-green/35 flex items-center justify-center mx-auto"
-                    style={{ boxShadow: "0 0 32px rgba(74,222,128,0.22)" }}
+                    className="w-20 h-20 rounded-full bg-primary/5 border-2 border-primary/20 flex items-center justify-center mx-auto shadow-lg shadow-primary/5"
                   >
-                    <CheckCircle className="h-8 w-8 text-neon-green" />
+                    <CheckCircle className="h-10 w-10 text-[#1BA6A6]" />
                   </motion.div>
-                  <div>
-                    <h2 className="text-xl font-bold text-neon-green">
+                  <div className="space-y-1">
+                    <h2 className="text-2xl font-black text-foreground tracking-tight">
                       {mintResult.qty > 1 ? `${mintResult.qty} Tickets` : "Ticket"} Minted Successfully
                     </h2>
-                    <p className="text-sm text-muted-foreground mt-0.5">
+                    <p className="text-sm text-muted-foreground font-medium">
                       Your NFT is secured on the Ethereum blockchain
                     </p>
                   </div>
                 </div>
 
                 {/* ── Ticket details table ── */}
-                <div className="rounded-xl border border-white/[0.07] overflow-hidden divide-y divide-white/[0.05]"
-                  style={{ background: "rgba(255,255,255,0.03)" }}>
+                <div className="rounded-2xl border border-border overflow-hidden divide-y divide-border bg-[#F5F7F8]/50">
                   {[
                     { label: "Event",            value: mintResult.eventName,                                      mono: false },
                     { label: "Tier",             value: mintResult.tierName,                                       mono: false },
-                    { label: "Token ID",         value: `#${ticket?.tokenId.slice(0, 18)}`,                       mono: true, color: "text-primary" },
+                    { label: "Token ID",         value: `#${ticket?.tokenId.slice(0, 18)}`,                       mono: true, color: "text-[#1BA6A6]" },
                     { label: "Transaction Hash", value: `${ticket?.purchaseTx.slice(0,14)}…${ticket?.purchaseTx.slice(-8)}`, mono: true },
-                    { label: "Block Number",     value: `#${mintResult.blockNumber.toLocaleString()}`,              mono: true, color: "text-violet-400" },
+                    { label: "Block Number",     value: `#${mintResult.blockNumber.toLocaleString()}`,              mono: true, color: "text-[#1BA6A6]" },
                     { label: "Wallet",           value: ownerAddress ? `${ownerAddress.slice(0,8)}…${ownerAddress.slice(-6)}` : "—", mono: true },
                   ].map(({ label, value, mono, color }) => (
-                    <div key={label} className="flex items-center justify-between px-4 py-3 gap-4">
-                      <span className="text-xs text-muted-foreground flex-shrink-0">{label}</span>
-                      <span className={`text-sm font-medium text-right break-all leading-snug ${mono ? "font-mono text-xs" : ""} ${color ?? "text-foreground"}`}>
+                    <div key={label} className="flex items-center justify-between px-5 py-4 gap-4">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 flex-shrink-0">{label}</span>
+                      <span className={`text-[13px] font-bold text-right break-all leading-snug ${mono ? "font-mono" : ""} ${color ?? "text-foreground"}`}>
                         {value}
                       </span>
                     </div>
@@ -385,39 +347,39 @@ export default function MintingFlow({
                 </div>
 
                 {/* ── Action buttons ── */}
-                <div className="space-y-2 pt-1">
+                <div className="space-y-3 pt-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button variant="outline"
+                      className="w-full h-12 gap-2 rounded-xl border-border bg-white text-foreground font-bold hover:bg-muted shadow-sm"
+                      onClick={() => window.open(`https://etherscan.io/tx/${ticket?.purchaseTx}`, "_blank", "noopener,noreferrer")}
+                    >
+                      <ExternalLink className="h-4 w-4" /> Explorer
+                    </Button>
+                    <Button variant="outline"
+                      className="w-full h-12 gap-2 rounded-xl border-border bg-white text-foreground font-bold hover:bg-muted shadow-sm"
+                      disabled={downloading}
+                      onClick={async () => { setDownloading(true); await onDownloadPDF(); setDownloading(false); }}
+                    >
+                      <Download className="h-4 w-4" /> PDF
+                    </Button>
+                  </div>
                   <Button variant="outline"
-                    className="w-full gap-2 border-white/10 hover:border-primary/40 hover:bg-primary/5"
-                    onClick={() => window.open(`https://etherscan.io/tx/${ticket?.purchaseTx}`, "_blank", "noopener,noreferrer")}
-                  >
-                    <ExternalLink className="h-4 w-4" /> View on Etherscan
-                  </Button>
-                  <Button variant="outline"
-                    className="w-full gap-2 border-white/10 hover:border-violet-500/40 hover:bg-violet-500/5"
-                    disabled={downloading}
-                    onClick={async () => { setDownloading(true); await onDownloadPDF(); setDownloading(false); }}
-                  >
-                    <Download className="h-4 w-4" />
-                    {downloading ? "Generating PDF…" : `Download Ticket${mintResult.qty > 1 ? "s" : ""} PDF`}
-                  </Button>
-                  <Button variant="outline"
-                    className="w-full gap-2 border-white/10 hover:border-cyan-500/40 hover:bg-cyan-500/5"
+                    className="w-full h-12 gap-2 rounded-xl border-border bg-white text-foreground font-bold hover:bg-muted shadow-sm"
                     onClick={() => setQrOpen(true)}
                   >
                     <QrCode className="h-4 w-4" /> Open Entry QR
                   </Button>
-                  <Button className="w-full gradient-primary gap-2"
+                  <Button className="w-full h-14 rounded-xl bg-primary gap-2 font-bold text-white shadow-xl shadow-primary/20 hover:opacity-95 uppercase tracking-widest"
                     onClick={onGoToTickets}
                   >
-                    <Ticket className="h-4 w-4" /> Go to My Tickets
+                    <Ticket className="h-5 w-5" /> Go to My Tickets
                   </Button>
                 </div>
 
-                {/* ── Security note ── */}
-                <div className="rounded-xl border border-white/[0.06] px-4 py-3 flex items-start gap-2.5"
-                  style={{ background: "rgba(255,255,255,0.02)" }}>
-                  <Shield className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                {/* ── Security note ── */ }
+                <div className="rounded-2xl border border-primary/10 px-5 py-4 flex items-start gap-3.5 bg-primary/[0.02]">
+                  <Shield className="h-5 w-5 text-[#1BA6A6] flex-shrink-0 mt-0.5 shadow-sm" />
+                  <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">
                     This NFT ticket is securely stored on the blockchain and linked to your wallet.
                     The QR code refreshes every 30 seconds to prevent fraud or screenshot misuse.
                   </p>
@@ -431,20 +393,22 @@ export default function MintingFlow({
       {/* ── Entry QR Dialog ─────────────────────────────────────────── */}
       {ticket && (
         <Dialog open={qrOpen} onOpenChange={setQrOpen}>
-          <DialogContent className="glass-strong">
+          <DialogContent className="bg-white border-[#E5E7EB] rounded-[2rem] p-8 max-w-sm">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <QrCode className="h-4 w-4 text-primary" /> Entry QR Code
+              <DialogTitle className="flex items-center gap-2 text-2xl font-black text-[#1F2933]">
+                <QrCode className="h-6 w-6 text-[#1BA6A6]" /> Entry QR
               </DialogTitle>
             </DialogHeader>
-            <div className="flex flex-col items-center py-4 gap-4">
-              <DynamicQRDisplay
-                ticketId={ticket.id}
-                qrSecret={ticket.qrSecret}
-                active={qrOpen}
-              />
-              <p className="text-xs text-muted-foreground text-center">
-                QR rotates every 30 seconds — do not screenshot
+            <div className="flex flex-col items-center py-6 gap-6">
+              <div className="p-4 bg-[#F5F7F8] rounded-[2rem] border border-[#E5E7EB] shadow-inner">
+                <DynamicQRDisplay
+                  ticketId={ticket.id}
+                  qrSecret={ticket.qrSecret}
+                  active={qrOpen}
+                />
+              </div>
+              <p className="text-xs text-[#6B7280] text-center font-bold uppercase tracking-widest px-4">
+                QR rotates every 30 seconds — screenshot use prohibited
               </p>
             </div>
           </DialogContent>

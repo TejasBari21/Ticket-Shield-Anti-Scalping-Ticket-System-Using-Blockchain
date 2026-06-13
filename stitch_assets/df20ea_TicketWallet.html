@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TicketShield Digital Wallet</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-container": "#d6a9ff",
+              "secondary-fixed-dim": "#ddb7ff",
+              "primary-fixed-dim": "#cbbeff",
+              "on-secondary-fixed": "#2c0051",
+              "tertiary-fixed": "#63f7ff",
+              "surface-variant": "#343440",
+              "tertiary": "#00dce5",
+              "inverse-surface": "#e3e0f1",
+              "inverse-primary": "#632ef6",
+              "surface-container-low": "#1b1a26",
+              "outline-variant": "#484456",
+              "surface-container-lowest": "#0d0d18",
+              "secondary-fixed": "#f0dbff",
+              "primary-fixed": "#e6deff",
+              "inverse-on-surface": "#302f3b",
+              "on-tertiary": "#003739",
+              "error-container": "#93000a",
+              "tertiary-container": "#007378",
+              "on-primary-fixed-variant": "#4b00d4",
+              "on-tertiary-fixed": "#002021",
+              "outline": "#938ea2",
+              "primary": "#cbbeff",
+              "surface-tint": "#cbbeff",
+              "secondary-container": "#6f00be",
+              "primary-container": "#6c3bff",
+              "on-surface": "#e3e0f1",
+              "surface-dim": "#12121d",
+              "on-secondary-fixed-variant": "#6900b3",
+              "on-secondary": "#490080",
+              "tertiary-fixed-dim": "#00dce5",
+              "surface-container-high": "#292935",
+              "on-error-container": "#ffdad6",
+              "background": "#12121d",
+              "on-background": "#e3e0f1",
+              "on-error": "#690005",
+              "error": "#ffb4ab",
+              "surface": "#12121d",
+              "on-tertiary-container": "#87f8ff",
+              "on-surface-variant": "#cac3d9",
+              "on-primary": "#330098",
+              "surface-container-highest": "#343440",
+              "surface-container": "#1f1e2a",
+              "on-primary-fixed": "#1d0061",
+              "surface-bright": "#383845",
+              "secondary": "#ddb7ff",
+              "on-primary-container": "#eae2ff",
+              "on-tertiary-fixed-variant": "#004f53"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(56, 56, 69, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(147, 142, 162, 0.15);
+        }
+        .sovereign-gradient {
+            background: linear-gradient(135deg, #6C3BFF 0%, #DDB7FF 100%);
+        }
+        .ticket-glow {
+            box-shadow: 0 20px 40px -15px rgba(203, 190, 255, 0.08);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top App Bar -->
+<header class="fixed top-0 left-0 right-0 z-50 glass-panel h-16 flex items-center px-6">
+<div class="flex items-center justify-between w-full max-w-5xl mx-auto">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-[10px] font-bold text-on-primary-container">UP</div>
+<span class="font-headline font-extrabold text-lg tracking-tight">TicketShield</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</button>
+</div>
+</header>
+<main class="pt-24 pb-32 min-h-screen">
+<!-- Hero Section -->
+<section class="px-6 max-w-5xl mx-auto mb-8">
+<div class="flex flex-col gap-1">
+<span class="font-label text-xs uppercase tracking-[0.2em] text-on-surface-variant font-bold">Your Digital Assets</span>
+<h1 class="font-headline text-4xl font-extrabold text-on-surface leading-tight">Secured Ledger</h1>
+</div>
+</section>
+<!-- Sovereign Wallet Carousel -->
+<section class="relative overflow-hidden mb-12">
+<div class="flex overflow-x-auto gap-6 px-6 hide-scrollbar snap-x snap-mandatory">
+<!-- Ticket Card 1 -->
+<div class="flex-shrink-0 w-[320px] sm:w-[380px] snap-center">
+<div class="bg-surface-container-high rounded-xl overflow-hidden ticket-glow relative border-t border-l border-white/5">
+<div class="h-40 relative">
+<img class="w-full h-full object-cover" data-alt="Modern dark concert stage with neon lights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDt20NL6B3oqQFOavdzE3OC0g8MDWev_-msYmRgpK5ALDVrwTmUg9JCTK6s5-_iMSfj1fSncIG068MK1sEzlcXhBhoX365oboB80z7YE5QQ3pE8KYj3vDepQiM1hcX1ZyV-IpRQneOmxuS2uZf0ZdAZhPf4OYry9BxDJbVLiSi7POZfXCjgVkhRWUyKMLT8vTj546l3HeoSmtZe3fKGvxtqL0iTO6qNk0Xy7-NVUbuIFk_ElEitOiUkW5NNexu9yHEoA9Vx91la1_A"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-high via-transparent to-transparent"></div>
+<div class="absolute top-4 left-4">
+<span class="bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase">Verified Asset</span>
+</div>
+</div>
+<div class="p-6 flex flex-col gap-6">
+<div class="flex flex-col gap-1">
+<h3 class="font-headline text-2xl font-bold leading-tight">Neon Echoes World Tour</h3>
+<p class="text-on-surface-variant text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">location_on</span>
+                                    The Cyber Dome, Tokyo
+                                </p>
+</div>
+<div class="flex justify-between items-center py-4 border-y border-outline-variant/20">
+<div class="flex flex-col gap-1">
+<span class="font-label text-[10px] uppercase text-on-surface-variant">Date &amp; Time</span>
+<span class="text-sm font-semibold">Oct 24, 2024 • 20:00</span>
+</div>
+<div class="flex flex-col gap-1 text-right">
+<span class="font-label text-[10px] uppercase text-on-surface-variant">Seat / Zone</span>
+<span class="text-sm font-semibold">Section A, Row 12</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-4 py-4 bg-white/[0.03] rounded-xl border border-white/5">
+<div class="p-4 bg-white rounded-lg">
+<img class="w-32 h-32" data-alt="Security QR code for event entry" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6Nx-3t-jt_VIlv9o-RVKN1zaVGl7qc2op3YvWJhGMfRvj4z09SuDivMuoIAK6nfMr5LhspedPlrzFtN6mp2RXGJzTVvQpzhL67FpOP2A2ohhSrzdu8C2ov9OcgAqHEqBLt7SibtvbIiJ96kya8iOSwypzHVm09jL23IBrGJV8mUwzmxARBMzurdjNCfKr_UP5_tO1Gjzit-CBWBuj0Vp0y91g0qF0EnLwPCnN4O7H3PEDdKfFEM7ZOaSSmwu5lIXmIDcs8_1eHQA"/>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="font-label text-[10px] uppercase text-on-surface-variant">Ticket ID</span>
+<span class="font-mono text-xs text-primary tracking-widest">TS-882-991-LX</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Ticket Card 2 -->
+<div class="flex-shrink-0 w-[320px] sm:w-[380px] snap-center opacity-60">
+<div class="bg-surface-container-high rounded-xl overflow-hidden ticket-glow relative border-t border-l border-white/5">
+<div class="h-40 relative">
+<img class="w-full h-full object-cover" data-alt="Crowd at a festival under purple lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgloj1ZdT_O3tVgPjHnwiufR7Js0HduAbAn5kIEbTlcB2nAnflY66nxWglH8WuFaZV_sGzfGF3gLsgv-f596DZhJRp0W0AJLaArSWaDq4XxOIu2NGtJ_exwcmhGwg0HnlmzQI7WTlvV6bhY-PJ2p99qUvaGXBsGQzy7XgRCCCntCKDNHQ-8xoYA2BcrDQVnxveTZKeWytRHihCgLX4FvRtQbAv0EKqV8qE6ws8BWX1oMKq0MTXqKnYBR7okEoV_SIS2Vo9UrD-hZM"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-high via-transparent to-transparent"></div>
+<div class="absolute top-4 left-4">
+<span class="bg-surface-variant text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase">Upcoming</span>
+</div>
+</div>
+<div class="p-6 flex flex-col gap-6">
+<div class="flex flex-col gap-1">
+<h3 class="font-headline text-2xl font-bold leading-tight">Metropolis Jazz Festival</h3>
+<p class="text-on-surface-variant text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">location_on</span>
+                                    Blue Note Plaza
+                                </p>
+</div>
+<div class="flex justify-between items-center py-4 border-y border-outline-variant/20">
+<div class="flex flex-col gap-1">
+<span class="font-label text-[10px] uppercase text-on-surface-variant">Date &amp; Time</span>
+<span class="text-sm font-semibold">Nov 12, 2024 • 18:30</span>
+</div>
+<div class="flex flex-col gap-1 text-right">
+<span class="font-label text-[10px] uppercase text-on-surface-variant">Seat / Zone</span>
+<span class="text-sm font-semibold">VIP Lounge</span>
+</div>
+</div>
+<div class="h-32 flex items-center justify-center bg-surface-container-highest/30 rounded-xl border border-dashed border-outline-variant">
+<span class="text-on-surface-variant text-xs font-label">QR Code generates 24h before event</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty "Add" Card -->
+<div class="flex-shrink-0 w-[320px] sm:w-[380px] snap-center">
+<div class="h-full min-h-[500px] border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-primary transition-colors">
+<div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl">add</span>
+</div>
+<span class="font-headline font-bold text-on-surface-variant group-hover:text-primary">Import New Asset</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Bento Utility Grid -->
+<section class="px-6 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
+<!-- Wallet Balance -->
+<div class="md:col-span-2 glass-panel p-6 rounded-xl flex flex-col justify-between min-h-[160px]">
+<div class="flex justify-between items-start">
+<span class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Vault Balance</span>
+<span class="material-symbols-outlined text-tertiary">account_balance_wallet</span>
+</div>
+<div class="flex items-end gap-3">
+<span class="font-headline text-5xl font-extrabold text-on-surface">1.42</span>
+<span class="font-headline text-xl text-on-surface-variant mb-2 font-bold tracking-tight">ETH</span>
+<div class="mb-2 px-2 py-1 bg-tertiary/10 rounded-lg">
+<span class="text-tertiary text-xs font-bold">+4.2%</span>
+</div>
+</div>
+</div>
+<!-- Transfer Quick Action -->
+<div class="sovereign-gradient p-6 rounded-xl flex flex-col justify-between items-start min-h-[160px] text-on-primary-fixed">
+<span class="material-symbols-outlined text-3xl">send</span>
+<div class="flex flex-col gap-1">
+<span class="font-headline font-extrabold text-xl">Transfer Asset</span>
+<span class="text-xs opacity-80 font-medium">Send tickets securely to friends</span>
+</div>
+</div>
+<!-- Secondary Actions -->
+<div class="bg-surface-container-low p-4 rounded-xl flex items-center gap-4 hover:bg-surface-container transition-colors cursor-pointer border border-outline-variant/10">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">history</span>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-sm">Transaction History</span>
+<span class="text-xs text-on-surface-variant">12 completed ledger entries</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl flex items-center gap-4 hover:bg-surface-container transition-colors cursor-pointer border border-outline-variant/10">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">verified_user</span>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-sm">Vault Security</span>
+<span class="text-xs text-on-surface-variant">Biometric lock active</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl flex items-center gap-4 hover:bg-surface-container transition-colors cursor-pointer border border-outline-variant/10">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">map</span>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-sm">Venue Finder</span>
+<span class="text-xs text-on-surface-variant">Navigate to your events</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-white/5 pb-6 pt-3 px-8">
+<div class="max-w-md mx-auto flex justify-between items-center">
+<div class="flex flex-col items-center gap-1 group cursor-pointer text-on-surface-variant">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Home</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">confirmation_number</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Tickets</span>
+</div>
+<div class="-mt-12">
+<div class="w-16 h-16 sovereign-gradient rounded-full flex items-center justify-center shadow-lg shadow-primary-container/40 ring-4 ring-background">
+<span class="material-symbols-outlined text-on-primary-fixed text-3xl">qr_code_scanner</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer text-on-surface-variant">
+<span class="material-symbols-outlined">event</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Events</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer text-on-surface-variant">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Profile</span>
+</div>
+</div>
+</nav>
+</body></html>

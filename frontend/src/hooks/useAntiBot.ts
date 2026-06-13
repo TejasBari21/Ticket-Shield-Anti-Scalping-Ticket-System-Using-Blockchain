@@ -9,7 +9,7 @@ const MIN_BETWEEN_ATTEMPTS_MS = 8_000;
 /** Minimum time the user must have had the page open before a purchase is allowed (2 seconds). */
 const MIN_DWELL_TIME_MS = 2_000;
 
-const ATTEMPT_LOG_KEY = "fairpass_antibot_attempts";
+const ATTEMPT_LOG_KEY = "ticketshield_antibot_attempts";
 
 export type AttemptOutcome =
   | "pending"

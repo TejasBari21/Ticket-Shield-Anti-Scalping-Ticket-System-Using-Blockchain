@@ -54,7 +54,7 @@ export function useContract(options: UseContractOptions) {
     const init = async () => {
       try {
         setState((prev) => ({ ...prev, loading: true, error: null }));
-        await initializeContract(contractAddress);
+        await initializeContract(contractAddress, address ?? undefined);
         const chainId = await getNetworkChainId();
         const feePercentage = await getPlatformFeePercentage();
 
@@ -81,7 +81,7 @@ export function useContract(options: UseContractOptions) {
     };
 
     init();
-  }, [contractAddress, autoInitialize, toast]);
+  }, [contractAddress, autoInitialize, address, toast]);
 
   // Event Management
   const handleCreateEvent = useCallback(

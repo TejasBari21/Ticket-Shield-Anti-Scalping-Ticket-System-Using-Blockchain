@@ -1,8 +1,19 @@
 import hre from "hardhat";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 async function main() {
-  const contractAddress = "0xCfEB869F69431e42cdB54A4F4f105C19C080A601";
-  const newOwnerAddress = "0x78cbc741805e576e7a3ac4a9a6495e23c7e38309";
+  const contractAddress = process.env.VITE_CONTRACT_ADDRESS;
+  const newOwnerAddress = process.env.VITE_ADMIN_ADDRESS || process.env.ADMIN_PAYOUT_ADDRESS;
+
+  if (!contractAddress) {
+    throw new Error("Missing VITE_CONTRACT_ADDRESS in backend/.env");
+  }
+
+  if (!newOwnerAddress) {
+    throw new Error("Missing VITE_ADMIN_ADDRESS or ADMIN_PAYOUT_ADDRESS in backend/.env");
+  }
 
   console.log("Transferring contract ownership...");
   console.log(`Contract: ${contractAddress}`);
@@ -10,6 +21,12 @@ async function main() {
 
   // Get contract instance
   const EventTicket = await hre.ethers.getContractAt("EventTicket", contractAddress);
+
+  const currentOwner = await EventTicket.owner();
+  if (currentOwner.toLowerCase() === newOwnerAddress.toLowerCase()) {
+    console.log("✅ Ownership already set to target address.");
+    return;
+  }
 
   // Transfer ownership
   const tx = await EventTicket.transferOwnership(newOwnerAddress);

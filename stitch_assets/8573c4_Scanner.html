@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-container": "#d6a9ff",
+              "secondary-fixed-dim": "#ddb7ff",
+              "primary-fixed-dim": "#cbbeff",
+              "on-secondary-fixed": "#2c0051",
+              "tertiary-fixed": "#63f7ff",
+              "surface-variant": "#343440",
+              "tertiary": "#00dce5",
+              "inverse-surface": "#e3e0f1",
+              "inverse-primary": "#632ef6",
+              "surface-container-low": "#1b1a26",
+              "outline-variant": "#484456",
+              "surface-container-lowest": "#0d0d18",
+              "secondary-fixed": "#f0dbff",
+              "primary-fixed": "#e6deff",
+              "inverse-on-surface": "#302f3b",
+              "on-tertiary": "#003739",
+              "error-container": "#93000a",
+              "tertiary-container": "#007378",
+              "on-primary-fixed-variant": "#4b00d4",
+              "on-tertiary-fixed": "#002021",
+              "outline": "#938ea2",
+              "primary": "#cbbeff",
+              "surface-tint": "#cbbeff",
+              "secondary-container": "#6f00be",
+              "primary-container": "#6c3bff",
+              "on-surface": "#e3e0f1",
+              "surface-dim": "#12121d",
+              "on-secondary-fixed-variant": "#6900b3",
+              "on-secondary": "#490080",
+              "tertiary-fixed-dim": "#00dce5",
+              "surface-container-high": "#292935",
+              "on-error-container": "#ffdad6",
+              "background": "#12121d",
+              "on-background": "#e3e0f1",
+              "on-error": "#690005",
+              "error": "#ffb4ab",
+              "surface": "#12121d",
+              "on-tertiary-container": "#87f8ff",
+              "on-surface-variant": "#cac3d9",
+              "on-primary": "#330098",
+              "surface-container-highest": "#343440",
+              "surface-container": "#1f1e2a",
+              "on-primary-fixed": "#1d0061",
+              "surface-bright": "#383845",
+              "secondary": "#ddb7ff",
+              "on-primary-container": "#eae2ff",
+              "on-tertiary-fixed-variant": "#004f53"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .scanning-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #cbbeff;
+            box-shadow: 0 0 15px 2px #6c3bff;
+            animation: scan 3s ease-in-out infinite;
+        }
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        .glass-panel {
+            background: rgba(52, 52, 64, 0.6);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface font-body min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="h-16 flex items-center justify-between px-6 bg-surface-dim/80 backdrop-blur-md sticky top-0 z-50">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="User profile avatar close up photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZ314lHNBCDNtp0L7--3MXjbWO91DiaeuyWW9VDgu0c3GJBDfZQuDaCzeZ7PIzPYJMX9ZK8s1JzgG5u0O998nmuPWwHW7FzSrTWD02ewPiXwU6-Pe2eo_YhR1-LT8QkJwo4z1ftseAsAzPc6YiZ7zjjqOlFTz5p3TIyN6eaFKBP2Fv1i-SzaTyygk2bIasKZjNeIhzIwEPkxQRpRp8MBDwly6VVY4rP4PCNHTFR51dJz5p-n7Exvmz_nqi2D75cDyQEiw4j7OIVJY"/>
+</div>
+<span class="font-headline font-extrabold tracking-tight text-on-surface">TicketShield</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</button>
+</header>
+<!-- Main Scanner Viewport -->
+<main class="flex-1 relative flex flex-col overflow-hidden">
+<!-- Camera Viewfinder Mock (Full Background) -->
+<div class="absolute inset-0 bg-black z-0">
+<img alt="Event Venue" class="w-full h-full object-cover opacity-60" data-alt="Dark blurred music concert venue background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDU7KYpRK4xHTr0vpoAT06YH6bd1extsxg5muNfSpJPgu7BiRV4TvOu3d1xo_hJLS-n0qFQ1QkOyl1TgYMfJ9sbRHKKtKS3m5Ap8JjGxTgcD-GeaJ6hYDDPH2kWT8XrV5HHiluOpBcuCRnDSgvzOgDadngq6cmaraaCN_-B6LMCp0YxaI4KRSV4uP9ZKbt2Y2ItFG7eDipfxJenXXq_-1L1_8pi4o85gRiZmOjxyhuqAHK1qhNnkFRZ9ChdRxwZF-rJVU1CrGtqw4w"/>
+</div>
+<!-- Scanning Overlay -->
+<div class="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 bg-black/20">
+<!-- Scanning Frame Container -->
+<div class="relative w-full max-w-[320px] aspect-square">
+<!-- Neon Purple Scanning Frame Corners -->
+<div class="absolute top-0 left-0 w-12 h-12 border-l-4 border-t-4 border-primary rounded-tl-xl"></div>
+<div class="absolute top-0 right-0 w-12 h-12 border-r-4 border-t-4 border-primary rounded-tr-xl"></div>
+<div class="absolute bottom-0 left-0 w-12 h-12 border-l-4 border-b-4 border-primary rounded-bl-xl"></div>
+<div class="absolute bottom-0 right-0 w-12 h-12 border-r-4 border-b-4 border-primary rounded-br-xl"></div>
+<!-- Inner Scanning Area -->
+<div class="absolute inset-4 overflow-hidden">
+<div class="scanning-line"></div>
+</div>
+<!-- Ghost QR Background for visual cue -->
+<div class="absolute inset-8 opacity-20 flex items-center justify-center">
+<span class="material-symbols-outlined text-[180px] text-primary" style="font-variation-settings: 'wght' 100;">qr_code_2</span>
+</div>
+</div>
+<!-- Scanning Status -->
+<div class="mt-12 text-center space-y-2">
+<p class="text-on-surface font-headline font-bold text-xl tracking-wide">Scanning Ticket...</p>
+<p class="text-on-surface-variant font-label text-sm uppercase tracking-[0.2em]">Hold camera steady</p>
+</div>
+</div>
+<!-- Action Controls (Floating) -->
+<div class="absolute bottom-24 left-0 right-0 z-20 px-6 flex flex-col items-center gap-6">
+<div class="flex items-center gap-4">
+<!-- Flashlight Toggle -->
+<button class="glass-panel w-14 h-14 rounded-full flex items-center justify-center border border-outline-variant/20 text-on-surface hover:bg-surface-variant transition-all">
+<span class="material-symbols-outlined">flashlight_on</span>
+</button>
+<!-- Manual Entry Button -->
+<button class="glass-panel px-6 h-14 rounded-full flex items-center gap-3 border border-outline-variant/20 text-on-surface hover:bg-surface-variant transition-all">
+<span class="material-symbols-outlined text-secondary">keyboard</span>
+<span class="font-body font-semibold">Manual code entry</span>
+</button>
+<!-- Photo Library -->
+<button class="glass-panel w-14 h-14 rounded-full flex items-center justify-center border border-outline-variant/20 text-on-surface hover:bg-surface-variant transition-all">
+<span class="material-symbols-outlined">image</span>
+</button>
+</div>
+<!-- Bento Hint Box -->
+<div class="w-full max-w-sm glass-panel p-4 rounded-xl border border-outline-variant/15 flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-tertiary/20 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-on-surface">Auto-Verification Active</h4>
+<p class="text-xs text-on-surface-variant">Tickets are verified on the ledger instantly.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="h-20 bg-surface-dim border-t border-outline-variant/10 flex items-center justify-around px-2 z-50">
+<button class="flex flex-col items-center justify-center gap-1 w-16 group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">home</span>
+<span class="text-[10px] font-label font-medium text-on-surface-variant group-hover:text-primary">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 w-16 group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">confirmation_number</span>
+<span class="text-[10px] font-label font-medium text-on-surface-variant group-hover:text-primary">Tickets</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 w-16 -translate-y-4">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-container to-secondary shadow-lg shadow-primary-container/20 flex items-center justify-center text-on-primary-fixed">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'wght' 600;">qr_code_scanner</span>
+</div>
+<span class="text-[10px] font-label font-bold text-primary mt-1">Scan</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 w-16 group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">event</span>
+<span class="text-[10px] font-label font-medium text-on-surface-variant group-hover:text-primary">Events</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 w-16 group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">person</span>
+<span class="text-[10px] font-label font-medium text-on-surface-variant group-hover:text-primary">Profile</span>
+</button>
+</nav>
+</body></html>

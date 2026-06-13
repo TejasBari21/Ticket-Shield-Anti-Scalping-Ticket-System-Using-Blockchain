@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TicketShield - Secure Digital Ticket Verification</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-bg': '#0F0F1A',
+                        'brand-purple': '#6C3BFF',
+                        'brand-magenta': '#A855F7',
+                        'brand-accent': '#00F5FF'
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        :root {
+            --bg-deep: #0F0F1A;
+            --grad-start: #6C3BFF;
+            --grad-end: #A855F7;
+        }
+        body {
+            background-color: var(--bg-deep);
+            color: #E2E8F0;
+            overflow: hidden;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+        }
+        .logo-gradient {
+            background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #FFF 0%, #C7D2FE 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .glow-sphere {
+            filter: blur(80px);
+            background: radial-gradient(circle, var(--grad-start) 0%, transparent 70%);
+        }
+        .indicator-dot {
+            box-shadow: 0 0 8px var(--brand-accent);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body flex flex-col items-center justify-between min-h-screen py-16 px-8 select-none">
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+<div class="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] glow-sphere opacity-20"></div>
+<div class="absolute -bottom-[20%] -right-[10%] w-[70%] h-[70%] glow-sphere opacity-10"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]"></div>
+</div>
+<div class="h-8"></div>
+<div class="relative z-10 flex flex-col items-center justify-center w-full max-w-xs">
+<div class="relative mb-14 group">
+<div class="absolute inset-0 bg-brand-purple blur-[50px] opacity-30 scale-125"></div>
+<div class="absolute inset-0 bg-brand-magenta blur-[25px] opacity-20 scale-110"></div>
+<div class="relative w-32 h-36 logo-gradient rounded-[2rem] shadow-[0_24px_48px_-12px_rgba(108,59,255,0.5)] flex items-center justify-center overflow-hidden">
+<div class="absolute inset-[2px] rounded-[1.85rem] bg-gradient-to-br from-white/20 to-transparent pointer-events-none"></div>
+<span class="material-symbols-outlined text-white text-7xl font-light scale-110" style="font-variation-settings: 'FILL' 1, 'wght' 200;">
+                    shield
+                </span>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[-8deg] glass-card px-4 py-3 rounded-2xl border-white/20 shadow-2xl backdrop-blur-md">
+<span class="material-symbols-outlined text-white text-4xl" style="font-variation-settings: 'FILL' 1;">
+                        confirmation_number
+                    </span>
+</div>
+</div>
+</div>
+<div class="text-center space-y-3">
+<h1 class="font-headline text-4xl font-extrabold tracking-tight text-gradient">
+                TicketShield
+            </h1>
+<p class="text-[0.65rem] uppercase tracking-[0.3em] text-white/50 font-semibold">
+                Secure Digital Verification
+            </p>
+</div>
+</div>
+<div class="w-full max-w-sm flex flex-col items-center gap-12 z-10">
+<div class="grid grid-cols-2 gap-3 w-full">
+<div class="glass-card rounded-2xl p-4 border-white/5 flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[var(--brand-accent)] text-lg" style="font-variation-settings: 'wght' 300;">hub</span>
+<span class="text-[10px] uppercase tracking-widest text-white/40 font-bold">Network</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-brand-accent indicator-dot"></div>
+<span class="text-xs font-medium text-white/90">Mainnet Live</span>
+</div>
+</div>
+<div class="glass-card rounded-2xl p-4 border-white/5 flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-brand-magenta text-lg" style="font-variation-settings: 'wght' 300;">lock</span>
+<span class="text-[10px] uppercase tracking-widest text-white/40 font-bold">Security</span>
+</div>
+<div class="flex items-center gap-2 text-xs font-medium text-white/90">
+                    AES-256 Verified
+                </div>
+</div>
+</div>
+<div class="flex flex-col items-center gap-5 w-full">
+<div class="flex flex-col items-center gap-2">
+<p class="text-[0.7rem] font-medium text-white/40 tracking-wider">Initializing Encrypted Vault</p>
+<div class="w-32 h-[3px] bg-white/5 rounded-full overflow-hidden">
+<div class="w-2/3 h-full logo-gradient rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center gap-3 opacity-20">
+<div class="h-[1px] w-8 bg-white"></div>
+<span class="text-[10px] font-mono tracking-tighter">v4.2.0-STABLE</span>
+<div class="h-[1px] w-8 bg-white"></div>
+</div>
+</div>
+</div>
+<div class="fixed top-1/4 -right-12 w-24 h-24 border border-white/5 rounded-full blur-[1px]"></div>
+<div class="fixed bottom-1/3 -left-8 w-16 h-16 border border-brand-purple/20 rounded-full blur-[2px]"></div>
+
+</body></html>

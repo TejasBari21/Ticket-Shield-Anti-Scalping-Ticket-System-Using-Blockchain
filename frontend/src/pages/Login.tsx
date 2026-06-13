@@ -16,7 +16,7 @@ type AuthMode = "login" | "signup";
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signOut } = useAuth();
 
   // portal: which login form to show
   const [portal, setPortal] = useState<Portal | null>(null);
@@ -46,7 +46,7 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (mode === "signup" && password !== confirmPassword) {
+    if (mode === "signup" && portal !== "admin" && password !== confirmPassword) {
       toast({ title: "Passwords don't match", variant: "destructive" });
       return;
     }
@@ -63,16 +63,14 @@ const Login = () => {
         if (portal === "admin") {
           if (!user.roles.includes("admin")) {
             // Sign out immediately — non-admin tried to use the admin portal
-            await import("@/integrations/supabase/client").then(({ supabase }) =>
-              supabase.auth.signOut()
-            );
+            await signOut();
             throw new Error("Access denied. This account does not have admin privileges.");
           }
           toast({ title: "Welcome, Admin!", description: "Redirecting to admin panel…" });
           navigate("/admin");
         } else {
           toast({ title: "Welcome back!", description: "You have successfully logged in." });
-          navigate("/events");
+          navigate("/dashboard");
         }
       } else {
         // signup — only allowed for user portal
@@ -92,7 +90,7 @@ const Login = () => {
             title: "Account created!",
             description: "You are now signed in.",
           });
-          navigate("/events");
+          navigate("/dashboard");
           return;
         }
         setMode("login");
@@ -106,290 +104,221 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden py-8">
-      {/* Ambient background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[20%] left-[15%] w-[500px] h-[500px] rounded-full bg-primary/6 blur-[150px] animate-float" />
-        <div className="absolute bottom-[15%] right-[10%] w-[400px] h-[400px] rounded-full bg-neon-pink/5 blur-[130px] animate-float" style={{ animationDelay: "3s" }} />
-        <div className="absolute top-[55%] left-[50%] w-[300px] h-[300px] rounded-full bg-neon-cyan/4 blur-[120px] animate-float" style={{ animationDelay: "1.5s" }} />
+    <div className="min-h-screen flex flex-col justify-center items-center p-6 selection:bg-[#1BA6A6]/30 relative bg-background overflow-hidden font-sans">
+      {/* Subtle Ambient Gradient Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[10%] left-[10%] w-[600px] h-[600px] rounded-full bg-[#1BA6A6]/5 blur-[180px]" />
+        <div className="absolute bottom-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-[#7ED4D4]/5 blur-[150px]" />
       </div>
-      <div className="absolute inset-0 opacity-[0.03]" style={{
-        backgroundImage: "radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)",
-        backgroundSize: "32px 32px",
+      
+      <div className="absolute inset-0 opacity-[0.03] z-0" style={{
+        backgroundImage: "radial-gradient(circle, #1F2933 1px, transparent 1px)",
+        backgroundSize: "40px 40px",
       }} />
 
-      <div className={`relative z-10 w-full mx-auto px-6 transition-all duration-300 ${portal ? "max-w-md" : "max-w-xl"}`}>
-        {/* Logo */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-8"
-        >
-          <Link to="/" className="inline-flex items-center justify-center gap-3 mb-5">
-            <div className="w-11 h-11 rounded-xl gradient-primary-static flex items-center justify-center shadow-xl shadow-primary/30">
-              <span className="text-white font-bold text-base tracking-tight">FP</span>
-            </div>
-            <span className="text-2xl font-bold gradient-text">FairPass</span>
-          </Link>
-          <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-sm text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            <span>Web3 Ticketing Platform</span>
-            <div className="w-1.5 h-1.5 rounded-full bg-neon-green animate-pulse" />
+      {/* Main Content */}
+      <main className="w-full max-w-[440px] relative z-10 mt-8">
+        
+        {/* Brand Identity */}
+        <div className="flex flex-col items-center mb-10 text-center">
+          <div className="w-16 h-16 rounded-xl bg-[#1BA6A6] flex items-center justify-center mb-6 shadow-xl shadow-[#1BA6A6]/20 border border-[#1BA6A6]/10">
+             <Shield className="text-white h-8 w-8" />
           </div>
-        </motion.div>
+          <h1 className="font-extrabold text-4xl tracking-tight text-[#1F2933] mb-2">TicketShield</h1>
+          <p className="text-[#6B7280] text-sm font-medium">Secure access to your sovereign digital assets</p>
+        </div>
 
-        <AnimatePresence mode="wait">
-          {/* ── Portal selector ── */}
-          {!portal && (
-            <motion.div
-              key="portal-select"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -24 }}
-              transition={{ duration: 0.35 }}
-            >
-              <h2 className="text-center text-2xl font-extrabold mb-2 gradient-text">Select Portal</h2>
-              <p className="text-center text-sm text-muted-foreground mb-8">Choose how you want to access FairPass</p>
+        {/* Login Container */}
+        <div className="bg-white rounded-[2rem] p-8 shadow-2xl relative overflow-hidden border border-[#E5E7EB]">
+          {/* Subtle accent line */}
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-transparent via-[#1BA6A6]/40 to-transparent"></div>
 
-              <div className="grid grid-cols-2 gap-5">
-                {/* User */}
-                <button
-                  onClick={() => handlePortalSelect("user")}
-                  className="glass rounded-2xl p-8 border border-white/[0.06] hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-0.5 transition-all duration-300 group text-left focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5 group-hover:bg-primary/20 group-hover:border-primary/40 transition-all">
-                    <Users className="h-7 w-7 text-primary" />
-                  </div>
-                  <h3 className="font-bold text-lg text-foreground mb-1.5">User</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">Browse events &amp; buy tickets</p>
-                  <div className="flex items-center gap-1.5 mt-6 text-primary text-sm font-semibold">
-                    Enter <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </button>
+          {/* Form Header for Admin or Mode */}
+          <AnimatePresence mode="popLayout">
+            {portal === "admin" && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mb-6 flex items-center gap-2 justify-center bg-amber-50 text-amber-600 border border-amber-100 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest overflow-hidden">
+                <Shield className="h-4 w-4" /> Admin Access
+              </motion.div>
+            )}
+            {portal === "user" && mode === "signup" && (
+               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mb-6 flex items-center gap-2 justify-center bg-[#1BA6A6]/5 text-[#1BA6A6] border border-[#1BA6A6]/10 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest overflow-hidden">
+                  <Users className="h-4 w-4" /> Wallet Registration
+               </motion.div>
+            )}
+          </AnimatePresence>
 
-                {/* Admin */}
-                <button
-                  onClick={() => handlePortalSelect("admin")}
-                  className="glass rounded-2xl p-8 border border-white/[0.06] hover:border-amber-500/50 hover:shadow-2xl hover:shadow-amber-500/10 hover:-translate-y-0.5 transition-all duration-300 group text-left focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-5 group-hover:bg-amber-500/20 group-hover:border-amber-500/40 transition-all">
-                    <Shield className="h-7 w-7 text-amber-400" />
-                  </div>
-                  <h3 className="font-bold text-lg text-foreground mb-1.5">Admin</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">Manage events &amp; platform</p>
-                  <div className="flex items-center gap-1.5 mt-6 text-amber-400 text-sm font-semibold">
-                    Enter <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ── Login / Signup form ── */}
-          {portal && (
-            <motion.div
-              key={`form-${portal}`}
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -24 }}
-              transition={{ duration: 0.35 }}
-            >
-              {/* Header */}
-              <div className="text-center mb-6">
-                <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3 ${
-                  portal === "admin"
-                    ? "bg-amber-500/10 border border-amber-500/20"
-                    : "bg-primary/10 border border-primary/20"
-                }`}>
-                  {portal === "admin"
-                    ? <Shield className="h-7 w-7 text-amber-400" />
-                    : <Users className="h-7 w-7 text-primary" />
-                  }
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            {/* Email Input */}
+            <div className="space-y-2">
+              <Label className="block text-[10px] font-bold text-[#6B7280] px-1 uppercase tracking-widest">Email Address</Label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                   <Mail className="h-5 w-5 text-[#9CA3AF] group-focus-within:text-[#1BA6A6] transition-colors" />
                 </div>
-                <h1 className={`text-2xl font-extrabold mb-1 ${portal === "admin" ? "text-amber-400" : "gradient-text"}`}>
-                  {portal === "admin" ? "Admin Portal" : mode === "login" ? "Welcome Back" : "Create Account"}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  {portal === "admin"
-                    ? "Sign in with your admin credentials"
-                    : mode === "login"
-                    ? "Sign in to access your tickets"
-                    : "Join FairPass today"}
-                </p>
+                <Input
+                  className="w-full bg-[#F5F7F8] border-[#E5E7EB] rounded-xl py-6 pl-12 pr-4 text-[#1F2933] placeholder:text-[#9CA3AF]/60 focus:ring-2 focus:ring-[#1BA6A6]/10 transition-all font-medium text-base h-14"
+                  placeholder={portal === "admin" ? "admin@vault.gov" : "name@vault.com"}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
+            </div>
 
-              {/* Card */}
-              <div className="glass rounded-2xl border border-white/[0.08] p-7 shadow-2xl shadow-black/20">
-                {/* Sign In / Sign Up toggle (user only) */}
-                {portal === "user" && (
-                  <div className="flex rounded-xl overflow-hidden border border-white/[0.08] mb-6 bg-white/[0.02]">
-                    {(["login", "signup"] as AuthMode[]).map((m) => (
-                      <button
-                        key={m}
-                        onClick={() => { setMode(m); resetForm(); }}
-                        className={`flex-1 py-2.5 text-sm font-medium transition-all duration-200 ${
-                          mode === m
-                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {m === "login" ? "Sign In" : "Sign Up"}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Email */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="email" className="text-sm text-muted-foreground">Email Address</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder={portal === "admin" ? "admin@example.com" : "you@example.com"}
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="pl-10 bg-white/[0.03] border-white/[0.08] focus:border-primary/50 h-11"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Password */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-sm text-muted-foreground">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        className="pl-10 pr-10 bg-white/[0.03] border-white/[0.08] focus:border-primary/50 h-11"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((v) => !v)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        aria-label={showPassword ? "Hide password" : "Show password"}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Confirm Password (user signup only) */}
-                  {portal === "user" && mode === "signup" && (
-                    <div className="space-y-1.5">
-                      <Label htmlFor="confirmPassword" className="text-sm text-muted-foreground">Confirm Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="confirmPassword"
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          required
-                          className="pl-10 pr-10 bg-white/[0.03] border-white/[0.08] focus:border-primary/50 h-11"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword((v) => !v)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          aria-label={showConfirmPassword ? "Hide" : "Show"}
-                        >
-                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Forgot password (login mode) */}
-                  {mode === "login" && (
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        className="text-xs text-primary hover:underline"
-                        onClick={() => {
-                          toast({ title: "Password reset not available", description: "Please contact support to reset your password.", variant: "destructive" });
-                        }}
-                      >
-                        Forgot password?
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Submit */}
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className={`w-full h-11 gap-2 text-sm font-semibold ${
-                      portal === "admin"
-                        ? "bg-amber-500 hover:bg-amber-400 text-black shadow-lg shadow-amber-500/20"
-                        : "btn-primary"
-                    }`}
-                  >
-                    {loading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        {portal === "admin" ? "Sign In as Admin" : mode === "login" ? "Sign In" : "Create Account"}
-                        <ArrowRight className="h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                </form>
-
-                {/* Switch mode footer (user only) */}
-                {portal === "user" && (
-                  <>
-                    <div className="flex items-center gap-3 my-5">
-                      <div className="flex-1 h-px bg-white/[0.06]" />
-                      <span className="text-xs text-muted-foreground">or</span>
-                      <div className="flex-1 h-px bg-white/[0.06]" />
-                    </div>
-                    <p className="text-center text-sm text-muted-foreground">
-                      {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
-                      <button
-                        type="button"
-                        onClick={() => { setMode(mode === "login" ? "signup" : "login"); resetForm(); }}
-                        className="text-primary font-medium hover:underline"
-                      >
-                        {mode === "login" ? "Sign up" : "Sign in"}
-                      </button>
-                    </p>
-                  </>
+            {/* Password Input */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center px-1">
+                <Label className="block text-[10px] font-bold text-[#6B7280] uppercase tracking-widest">Security Key</Label>
+                {mode === "login" && (
+                  <button type="button" onClick={() => toast({ title: "Recovery Unavailable", variant: "destructive"})} className="text-[10px] font-bold text-[#1BA6A6] hover:underline transition-colors uppercase tracking-wider">
+                    Forgot?
+                  </button>
                 )}
               </div>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-[#9CA3AF] group-focus-within:text-[#1BA6A6] transition-colors" />
+                </div>
+                <Input
+                  className="w-full bg-[#F5F7F8] border-[#E5E7EB] rounded-xl py-6 pl-12 pr-12 text-[#1F2933] placeholder:text-[#9CA3AF]/60 focus:ring-2 focus:ring-[#1BA6A6]/10 transition-all font-medium tracking-widest text-base h-14"
+                  placeholder="••••••••••••"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-4 flex items-center text-[#9CA3AF] hover:text-[#1F2933] transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
 
-              {/* Back to portal selector */}
-              <button
-                type="button"
-                onClick={() => { setPortal(null); resetForm(); }}
-                className="block text-center w-full mt-5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                ← Back to portal selection
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            {/* Confirm Password (signup only) */}
+            <AnimatePresence>
+              {mode === "signup" && portal !== "admin" && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-2 overflow-hidden">
+                  <Label className="block text-[10px] font-bold text-[#6B7280] px-1 uppercase tracking-widest mt-2">Verify Key</Label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                      <Lock className="h-5 w-5 text-[#9CA3AF] group-focus-within:text-[#1BA6A6] transition-colors" />
+                    </div>
+                    <Input
+                      className="w-full bg-[#F5F7F8] border-[#E5E7EB] rounded-xl py-6 pl-12 pr-12 text-[#1F2933] placeholder:text-[#9CA3AF]/60 focus:ring-2 focus:ring-[#1BA6A6]/10 transition-all font-medium tracking-widest text-base h-14"
+                      placeholder="••••••••••••"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                    <button type="button" onClick={() => setShowConfirmPassword((v) => !v)} className="absolute inset-y-0 right-4 flex items-center text-[#9CA3AF] hover:text-[#1F2933] transition-colors">
+                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-        {/* Back to landing */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-center mt-6">
-          <Link to="/" className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors">
-            ← Back to home
-          </Link>
-        </motion.div>
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${
+                 portal === "admin" 
+                   ? "bg-amber-500 shadow-amber-500/20" 
+                   : "bg-[#1BA6A6] shadow-[#1BA6A6]/20"
+              }`}
+            >
+              {loading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <>
+                  {portal === "admin" ? "Authenticate Admin" : mode === "login" ? "Login Securely" : "Initialize Secure Wallet"}
+                  <ArrowRight className="h-5 w-5" />
+                </>
+              )}
+            </button>
+
+            {/* Divider and Toggle */}
+            {portal !== "admin" && (
+              <>
+                <div className="flex items-center gap-4 py-2">
+                  <div className="h-[1px] flex-1 bg-[#E5E7EB]"></div>
+                  <span className="text-[10px] text-[#9CA3AF] uppercase tracking-[0.2em] font-bold">{mode === "login" ? "Social Protocol" : "Already registered?"}</span>
+                  <div className="h-[1px] flex-1 bg-[#E5E7EB]"></div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => { setMode(mode === "login" ? "signup" : "login"); resetForm(); }}
+                  className="w-full border border-[#E5E7EB] bg-white py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-[#F5F7F8] transition-colors text-[#1F2933] text-sm font-bold group"
+                >
+                  {mode === "login" ? (
+                    <>
+                      <Sparkles className="w-4 h-4 text-[#1BA6A6] group-hover:scale-110 transition-transform" />
+                      <span>Create Sovereign Wallet</span>
+                    </>
+                  ) : (
+                    <span>Sign In Securely</span>
+                  )}
+                </button>
+              </>
+            )}
+          </form>
+        </div>
+
+        {/* Secondary Actions & Metadata */}
+        <div className="mt-8 flex flex-col items-center gap-6">
+          <button
+            onClick={() => {
+               if (portal === "user") {
+                 setPortal("admin");
+               } else {
+                 setPortal("user");
+                 setMode("login");
+               }
+               resetForm(); 
+            }}
+            className="group flex items-center gap-2 text-xs font-bold tracking-wide text-[#6B7280] hover:text-[#1BA6A6] transition-colors"
+          >
+            {portal === "admin" ? (
+              <>
+                <Users className="h-4 w-4 text-[#1BA6A6] group-hover:scale-110 transition-transform" />
+                Return to User Access
+              </>
+            ) : (
+              <>
+                <Shield className="h-4 w-4 text-amber-500 group-hover:scale-110 transition-transform" />
+                Admin / Event Organizer Login
+              </>
+            )}
+          </button>
+
+          {/* Technical Utilities */}
+          <div className="flex items-center gap-4 pt-4 border-t border-[#E5E7EB] w-full justify-center">
+            <Link to="/" className="flex items-center gap-1.5 text-[#9CA3AF] hover:text-[#1BA6A6] transition-colors">
+              <span className="text-[10px] uppercase tracking-widest font-bold">API Configuration</span>
+            </Link>
+            <div className="w-1 h-1 rounded-full bg-[#E5E7EB]"></div>
+            <div className="flex items-center gap-1.5">
+              <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-sm animate-pulse"></span>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-[#9CA3AF]">System Nominal</span>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Background Decoration */}
+      <div className="fixed bottom-0 left-0 p-8 pointer-events-none opacity-5">
+        <p className="text-8xl font-black text-[#1F2933] select-none tracking-tighter">VAULT</p>
       </div>
     </div>
   );
 };
 
 export default Login;
-

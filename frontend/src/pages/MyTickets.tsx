@@ -1,483 +1,241 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import {
-  Ticket,
-  QrCode,
-  Calendar,
-  MapPin,
-  Tag,
-  ArrowUpRight,
-  LayoutGrid,
-  List,
-  ShieldCheck,
-  Link2,
-  Copy,
-  CheckCheck,
-  ArrowLeft,
-  Download,
-} from "lucide-react";
-import {
-  Button, Badge,
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
-  Input, Separator,
-} from "@/components/ui";
+import { Link, useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 import { useWallet } from "@/contexts/WalletContext";
-import { useToast } from "@/hooks/use-toast";
-import { format, differenceInHours } from "date-fns";
+import { ticketDB } from "@/lib/localDB";
 import { QRCodeSVG } from "qrcode.react";
-import NFTTicketCard from "@/components/NFTTicketCard";
-import DynamicQRDisplay from "@/components/DynamicQRDisplay";
-import { ticketDB, localDB } from "@/lib/localDB";
-import { generateTicketPDF } from "@/lib/generateTicketPDF";
-import { useNavigate } from "react-router-dom";
+import { Ticket, MapPin, Plus, Wallet, Send, History, ShieldCheck, Map, ArrowLeft } from "lucide-react";
+import { fetchUserTicketsFromSupabase } from "@/integrations/supabase/tickets";
 
-interface TicketWithDetails {
-  id: string;
-  status: string;
-  purchase_tx: string | null;
-  token_id: string | null;
-  qr_secret: string | null;
-  created_at: string;
-  events: { id: string; name: string; date: string; venue: string; location: string | null };
-  ticket_tiers: { tier_name: string; price: number };
-}
+const DEFAULT_EVENT_IMAGE = "data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 800 500%22%3E%3Cdefs%3E%3ClinearGradient id=%22grad%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22%3E%3Cstop offset=%220%25%22 style=%22stop-color:%231BA6A6;stop-opacity:1%22/%3E%3Cstop offset=%22100%25%22 style=%22stop-color:%237ED4D4;stop-opacity:1%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22800%22 height=%22500%22 fill=%22url(%23grad)%22/%3E%3C/svg%3E";
 
-const statusColors: Record<string, string> = {
-  active: "bg-neon-green/20 text-neon-green",
-  used: "bg-muted text-muted-foreground",
-  listed: "bg-primary/20 text-primary",
-  expired: "bg-destructive/20 text-destructive",
-};
-
-const MyTickets = () => {
-  const { isConnected, userId, address } = useWallet();
-  const { toast } = useToast();
+export default function MyTickets() {
+  const { isConnected, userId } = useWallet();
   const navigate = useNavigate();
-  const [tickets, setTickets] = useState<TicketWithDetails[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [resalePrice, setResalePrice] = useState("");
-  const [listingTicket, setListingTicket] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "gallery">("gallery");
-  const [selectedNFT, setSelectedNFT] = useState<TicketWithDetails | null>(null);
-  const [galleryQRTicket, setGalleryQRTicket] = useState<TicketWithDetails | null>(null);
-  const [galleryResellTicket, setGalleryResellTicket] = useState<TicketWithDetails | null>(null);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
-  // Track which list-view QR dialog is open (for active prop)
-  const [openQRTicketId, setOpenQRTicketId] = useState<string | null>(null);
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (userId) {
-      setTickets(ticketDB.getTickets(userId) as any);
-    }
-    setLoading(false);
+    let active = true;
+
+    const loadTickets = async () => {
+      if (!userId) return;
+
+      const localTickets = ticketDB.getTickets(userId) as any[];
+      if (active) setTickets(localTickets);
+
+      try {
+        const cloudTickets = await fetchUserTicketsFromSupabase(userId);
+        if (active && cloudTickets.length > 0) {
+          setTickets(cloudTickets as any[]);
+        }
+      } catch (error) {
+        console.error("Failed to load tickets from Supabase:", error);
+      }
+    };
+
+    void loadTickets();
+
+    return () => {
+      active = false;
+    };
   }, [userId]);
-
-  const handleListForResale = async (_ticketId: string, _facePrice: number) => {
-    toast({ title: "Feature coming soon", description: "Resale listing is not yet available.", variant: "destructive" });
-  };
-
-  const isQRActive = (eventDate: string) => {
-    return differenceInHours(new Date(eventDate), new Date()) <= 24;
-  };
-
-  const copyToClipboard = (text: string, field: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 2000);
-  };
 
   if (!isConnected) {
     return (
-      <div className="p-6 text-center py-20">
-        <Ticket className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Connect Your Wallet</h2>
-        <p className="text-muted-foreground">Connect MetaMask to view your tickets.</p>
+      <div className="p-6 text-center py-20 flex flex-col items-center max-w-5xl mx-auto bg-background min-h-screen text-foreground">
+        <div className="w-full flex items-center mb-12">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors font-bold text-sm tracking-wider uppercase">
+            <ArrowLeft className="w-5 h-5" /> Back
+          </button>
+        </div>
+        <Wallet className="text-muted-foreground text-6xl mb-6 w-16 h-16 opacity-30" />
+        <h2 className="font-headline text-2xl font-bold mb-2 text-foreground">Connect Your Wallet</h2>
+        <p className="font-body text-muted-foreground font-medium">Connect MetaMask to view your tickets.</p>
+        <button className="mt-8 bg-primary text-white py-4 px-8 rounded-xl font-bold shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all text-sm uppercase tracking-widest" onClick={() => navigate("/login")}>
+          Go to Login
+        </button>
       </div>
     );
   }
 
+  const activeTickets = tickets.filter(t => t.status === "active");
+
+  const handleImageError = (ticketId: string) => {
+    setFailedImages(prev => new Set([...prev, ticketId]));
+  };
+
+  const getImageUrl = (ticketId: string, imageUrl: string | null | undefined): string => {
+    if (failedImages.has(ticketId) || !imageUrl) {
+      return DEFAULT_EVENT_IMAGE;
+    }
+    return imageUrl;
+  };
+
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 gap-2 text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </Button>
-        {/* Header with view toggle */}
-        <div className="flex items-start justify-between mb-2 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">My Tickets</h1>
-            <p className="text-muted-foreground mt-1">Your on-chain NFT ticket collection</p>
-          </div>
-          <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1 border border-muted/40">
-            <Button
-              variant={viewMode === "gallery" ? "default" : "ghost"}
-              size="sm"
-              className="h-8 gap-1.5 text-xs"
-              onClick={() => setViewMode("gallery")}
-            >
-              <LayoutGrid className="h-3.5 w-3.5" /> Gallery
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="sm"
-              className="h-8 gap-1.5 text-xs"
-              onClick={() => setViewMode("list")}
-            >
-              <List className="h-3.5 w-3.5" /> List
-            </Button>
-          </div>
+    <div className="bg-background text-foreground font-body selection:bg-primary/20 pb-32 min-h-screen">
+      <main className="pt-8 w-full max-w-5xl mx-auto">
+        {/* Navigation */}
+        <div className="px-6 flex items-center mb-6">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors font-bold text-sm tracking-wider uppercase">
+            <ArrowLeft className="w-5 h-5" /> Back
+          </button>
         </div>
 
-        {/* NFT count badge */}
-        {tickets.length > 0 && (
-          <div className="flex items-center gap-2 mb-8">
-            <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5 gap-1.5">
-              <ShieldCheck className="h-3 w-3" />
-              {tickets.length} NFT{tickets.length !== 1 ? "s" : ""} owned
-            </Badge>
+        {/* Hero Section */}
+        <section className="px-6 mb-8 text-center sm:text-left">
+          <div className="flex flex-col gap-1">
+            <span className="font-label text-xs uppercase tracking-[0.3em] text-primary font-bold block mb-2 opacity-80">YOUR DIGITAL ASSETS</span>
+            <h1 className="font-headline text-4xl font-bold text-foreground leading-tight tracking-tight">Secured Ledger</h1>
           </div>
-        )}
+        </section>
 
-        {loading ? (
-          <div className={viewMode === "gallery" ? "grid sm:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
-            {[1, 2, 3].map((i) => <div key={i} className="glass rounded-xl h-64 animate-pulse" />)}
-          </div>
-        ) : tickets.length === 0 ? (
-          <div className="text-center py-20">
-            <Ticket className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No Tickets Yet</h3>
-            <p className="text-muted-foreground">Browse events to purchase your first ticket.</p>
-          </div>
-        ) : viewMode === "gallery" ? (
-          /* ── Gallery / NFT Card Grid ─────────────────────────────── */
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {tickets.map((ticket, i) => (
-              <NFTTicketCard
-                key={ticket.id}
-                ticket={ticket}
-                index={i}
-                onShowQR={() => setGalleryQRTicket(ticket)}
-                onShowResell={() => { setGalleryResellTicket(ticket); setResalePrice(""); }}
-                onShowDetails={() => setSelectedNFT(ticket)}
-              />
-            ))}
-          </div>
-        ) : (
-          /* ── List View ───────────────────────────────────────────── */
-          <div className="space-y-4">
-            {tickets.map((ticket, i) => (
-              <motion.div
-                key={ticket.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="glass rounded-xl p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between hover:border-primary/30 transition-colors"
-              >
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <h3 className="font-semibold text-lg">{ticket.events?.name}</h3>
-                    <Badge className={statusColors[ticket.status] || ""}>{ticket.status}</Badge>
-                  </div>
-                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Tag className="h-3.5 w-3.5" />{ticket.ticket_tiers?.tier_name}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />{ticket.events && format(new Date(ticket.events.date), "MMM d, yyyy")}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5" />{ticket.events?.venue}
-                    </span>
-                  </div>
-                  {ticket.purchase_tx && (
-                    <p className="text-xs font-mono text-muted-foreground/60">TX: {ticket.purchase_tx}</p>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  {/* QR Code */}
-                  <Dialog
-                    open={openQRTicketId === ticket.id}
-                    onOpenChange={(o) => setOpenQRTicketId(o ? ticket.id : null)}
-                  >
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5"
-                        disabled={ticket.status !== "active"}
-                        onClick={() => setOpenQRTicketId(ticket.id)}
-                      >
-                        <QrCode className="h-4 w-4" />
-                        QR
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="glass-strong">
-                      <DialogHeader>
-                        <DialogTitle>Ticket QR Code</DialogTitle>
-                      </DialogHeader>
-                      <div className="flex flex-col items-center py-4">
-                        {ticket.events && isQRActive(ticket.events.date) ? (
-                          <DynamicQRDisplay
-                            ticketId={ticket.id}
-                            qrSecret={ticket.qr_secret}
-                            active={openQRTicketId === ticket.id}
-                            venueLat={localDB.getEvent(ticket.events?.id)?.venue_lat}
-                            venueLng={localDB.getEvent(ticket.events?.id)?.venue_lng}
-                            geoRadiusM={localDB.getEvent(ticket.events?.id)?.geo_radius_m}
-                          />
-                        ) : (
-                          <>
-                            <QrCode className="h-24 w-24 text-muted-foreground/20 mb-4" />
-                            <p className="text-muted-foreground text-center">
-                              QR code activates 24 hours before the event
-                            </p>
-                          </>
-                        )}
+        {/* Sovereign Wallet Carousel */}
+        <section className="relative overflow-hidden mb-12">
+          {activeTickets.length === 0 ? (
+            <div className="px-6">
+              <div className="bg-card p-10 rounded-2xl border border-border text-center flex flex-col items-center justify-center min-h-[350px] shadow-lg">
+                <Ticket className="w-20 h-20 text-muted-foreground opacity-10 mb-6" />
+                <h3 className="text-2xl font-bold mb-2 text-foreground">No Active Tickets</h3>
+                <p className="text-muted-foreground font-medium">Your vault is currently empty.</p>
+                <Link to="/events" className="mt-8 bg-primary/10 border border-primary/20 text-primary px-8 py-3 rounded-xl font-bold hover:bg-primary/20 transition-all uppercase tracking-widest text-xs">
+                  Browse Events
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="flex overflow-x-auto gap-6 px-6 hide-scrollbar snap-x snap-mandatory pb-8">
+              {activeTickets.map((ticket, i) => (
+                <div key={ticket.id} className="flex-shrink-0 w-[320px] sm:w-[380px] snap-center">
+                  <div className="bg-card rounded-[2rem] overflow-hidden shadow-lg relative border border-border hover:border-primary/40 transition-all">
+                    <div className="h-44 relative bg-muted">
+                      <img 
+                        className="w-full h-full object-cover grayscale-[0.2] transition-all hover:grayscale-0 duration-700" 
+                        alt="Event" 
+                        src={getImageUrl(ticket.id, ticket.events?.image_url)}
+                        onError={() => handleImageError(ticket.id)}
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-transparent to-transparent"></div>
+                      <div className="absolute top-5 left-5">
+                        <span className="bg-white/80 text-primary border border-border backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase shadow-sm">
+                          Verified Asset
+                        </span>
                       </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  {/* Download PDF */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
-                    disabled={ticket.status !== "active"}
-                    onClick={async () => {
-                      await generateTicketPDF({
-                        ticketId: ticket.id,
-                        qrSecret: ticket.qr_secret ?? "",
-                        eventName: ticket.events?.name ?? "",
-                        eventDate: ticket.events?.date ?? "",
-                        venue: ticket.events?.venue ?? "",
-                        tierName: ticket.ticket_tiers?.tier_name ?? "",
-                        price: ticket.ticket_tiers?.price ?? 0,
-                        purchaseTx: ticket.purchase_tx ?? "",
-                        tokenId: ticket.token_id ?? "",
-                        ownerWallet: address?.toLowerCase() ?? "",
-                        purchasedAt: ticket.created_at,
-                        eventCode: ticket.id.slice(4, 12).toUpperCase(),
-                      });
-                    }}
-                  >
-                    <Download className="h-4 w-4" />
-                    PDF
-                  </Button>
-
-                  {/* Resale */}
-                  {ticket.status === "active" && (
-                    <Dialog open={listingTicket === ticket.id} onOpenChange={(o) => !o && setListingTicket(null)}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setListingTicket(ticket.id)}>
-                          <ArrowUpRight className="h-4 w-4" />
-                          Resell
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="glass-strong">
-                        <DialogHeader>
-                          <DialogTitle>List for Resale</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <p className="text-sm text-muted-foreground">
-                            Max price: {ticket.ticket_tiers?.price} ETH (face value)
-                          </p>
-                          <Input
-                            type="number"
-                            placeholder="Price in ETH"
-                            value={resalePrice}
-                            onChange={(e) => setResalePrice(e.target.value)}
-                            step="0.0001"
-                            max={ticket.ticket_tiers?.price}
-                          />
-                          <Button
-                            className="w-full gradient-primary"
-                            onClick={() => handleListForResale(ticket.id, ticket.ticket_tiers?.price || 0)}
-                          >
-                            List for Resale
-                          </Button>
+                    </div>
+                    
+                    <div className="p-7 flex flex-col gap-6 bg-card text-foreground">
+                      <div className="flex flex-col gap-1.5">
+                        <h3 className="font-headline text-2xl font-bold leading-[1.1] truncate text-foreground">{ticket.events?.name || "Unknown Event"}</h3>
+                        <p className="text-muted-foreground text-sm flex items-center gap-2 truncate font-medium">
+                          <MapPin className="w-4 h-4 text-primary" />
+                          {ticket.events?.venue}
+                        </p>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-5 border-y border-border/50">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="font-label text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">Date & Time</span>
+                          <span className="text-sm font-bold text-foreground">{ticket.events ? format(new Date(ticket.events.date), "MMM d, yyyy • HH:mm") : "TBA"}</span>
                         </div>
-                      </DialogContent>
-                    </Dialog>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
+                        <div className="flex flex-col gap-1.5 text-right">
+                          <span className="font-label text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">Tier</span>
+                          <span className="text-sm font-bold text-primary uppercase">{ticket.ticket_tiers?.tier_name || "General"}</span>
+                        </div>
+                      </div>
 
-        {/* ═══ NFT Details Dialog ═══════════════════════════════════ */}
-        <Dialog open={!!selectedNFT} onOpenChange={(o) => !o && setSelectedNFT(null)}>
-          <DialogContent className="glass-strong max-w-lg !p-0">
-            {/* Gradient accent bar */}
-            <div className="h-1 w-full bg-gradient-to-r from-violet-500 via-primary to-cyan-500" />
-
-            {/* Header */}
-            <div className="px-6 pt-5 pb-4 border-b border-white/[0.06]">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-base font-semibold">
-                  <ShieldCheck className="h-4 w-4 text-primary flex-shrink-0" />
-                  NFT Ticket Details
-                </DialogTitle>
-              </DialogHeader>
-              {selectedNFT && (
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xl font-bold leading-tight truncate">{selectedNFT.events?.name}</p>
-                    <p className="text-sm text-muted-foreground mt-0.5">{selectedNFT.ticket_tiers?.tier_name}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <Badge className={`text-[10px] font-semibold ${statusColors[selectedNFT.status] || ""}`}>
-                      {selectedNFT.status}
-                    </Badge>
-                    <span className="text-xs font-mono text-primary font-semibold">
-                      {selectedNFT.ticket_tiers?.price} ETH
-                    </span>
+                      <div className="flex flex-col items-center gap-5 py-6 bg-muted/30 rounded-2xl border border-border/50 shadow-inner">
+                        <div className="p-4 bg-white rounded-2xl shadow-xl border border-border flex items-center justify-center p-3">
+                           <QRCodeSVG value={JSON.stringify({ id: ticket.id, secret: ticket.qr_secret })} size={140} fgColor="#1F2933" />
+                        </div>
+                        <div className="flex flex-col items-center gap-1.5">
+                          <span className="font-label text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Pass ID</span>
+                          <span className="font-mono text-xs text-primary font-bold tracking-[0.2em]">{ticket.id.substring(0,14).toUpperCase()}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              )}
+              ))}
+
+              {/* Empty "Add" Card */}
+              <div className="flex-shrink-0 w-[320px] sm:w-[380px] snap-center">
+                <Link to="/events" className="h-[95%] min-h-[450px] border-2 border-dashed border-border rounded-[2rem] flex flex-col items-center justify-center gap-6 group cursor-pointer hover:border-primary/50 hover:bg-muted/20 transition-all bg-muted/5">
+                  <div className="w-16 h-16 rounded-full bg-card border border-border flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-lg">
+                    <Plus className="w-8 h-8" />
+                  </div>
+                  <span className="font-headline font-bold text-muted-foreground text-lg group-hover:text-primary transition-colors tracking-tight">Acquire More Passes</span>
+                </Link>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Bento Utility Grid */}
+        <section className="px-6 flex flex-col gap-4">
+          {/* Top Two Column Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Wallet Balance */}
+            <div className="bg-card border border-border shadow-lg p-8 rounded-[2rem] flex flex-col justify-between min-h-[180px] relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -mr-8 -mt-8 transition-all group-hover:bg-primary/10"></div>
+              <div className="flex justify-between items-start">
+                <span className="font-label text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold opacity-60">Vault Balance</span>
+                <Wallet className="w-6 h-6 text-[#FACC15]" />
+              </div>
+              <div className="flex items-end gap-3 mt-8">
+                <span className="font-headline text-5xl font-bold text-foreground tracking-tighter">1.42</span>
+                <span className="font-headline text-xl text-primary mb-1 font-bold tracking-widest">ETH</span>
+                <div className="mb-2 px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                  <span className="text-emerald-500 text-[10px] font-bold tracking-widest">+4.2%</span>
+                </div>
+              </div>
             </div>
 
-            {selectedNFT && (
-              <div className="px-6 py-5 space-y-5 max-h-[65vh] overflow-y-auto">
-
-                {/* On-chain identity fields */}
-                <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">On-Chain Identity</p>
-                  <div className="space-y-2">
-                    {[
-                      { label: "Token ID", value: selectedNFT.token_id || "N/A", field: "token" },
-                      { label: "Transaction Hash", value: selectedNFT.purchase_tx || "N/A", field: "tx" },
-                      { label: "Owner Wallet", value: address || "Unknown", field: "wallet" },
-                    ].map(({ label, value, field }) => (
-                      <div key={field} className="rounded-xl bg-muted/20 border border-white/[0.06] px-4 py-3">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">{label}</p>
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs font-mono text-foreground/90 min-w-0 break-all leading-relaxed flex-1">{value}</p>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 flex-shrink-0 rounded-lg hover:bg-white/[0.06]"
-                            onClick={() => copyToClipboard(value, field)}
-                          >
-                            {copiedField === field
-                              ? <CheckCheck className="h-3.5 w-3.5 text-emerald-400" />
-                              : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Attributes grid */}
-                <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">Attributes</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { trait: "Standard", value: "ERC-721" },
-                      { trait: "Network", value: "Ethereum" },
-                      { trait: "Status", value: selectedNFT.status },
-                      { trait: "Tier", value: selectedNFT.ticket_tiers?.tier_name || "—" },
-                      { trait: "Face Value", value: `${selectedNFT.ticket_tiers?.price} ETH` },
-                      { trait: "Minted", value: selectedNFT.created_at ? format(new Date(selectedNFT.created_at), "MMM d, yyyy") : "—" },
-                    ].map(({ trait, value }) => (
-                      <div key={trait} className="rounded-xl bg-muted/20 border border-white/[0.06] px-3 py-3 flex flex-col gap-1">
-                        <p className="text-[9px] text-muted-foreground uppercase tracking-widest">{trait}</p>
-                        <p className="text-xs font-semibold text-foreground truncate">{value}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Chain badges */}
-                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/[0.06]">
-                  <Badge variant="outline" className="text-[10px] border-violet-500/30 text-violet-400 bg-violet-500/[0.07] rounded-full px-3">
-                    ERC-721
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400 bg-emerald-500/[0.07] rounded-full px-3">
-                    On-Chain NFT
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px] border-primary/30 text-primary bg-primary/[0.07] rounded-full px-3">
-                    FairPass Protocol
-                  </Badge>
-                </div>
+            {/* Transfer Quick Action */}
+            <div className="bg-primary p-8 rounded-[2rem] flex flex-col justify-between items-start min-h-[180px] text-white cursor-pointer hover:opacity-95 transition-all shadow-lg shadow-primary/20 hover:scale-[1.01] group">
+              <Send className="w-10 h-10 mb-4 border border-white/20 rounded-2xl p-2 bg-white/10 backdrop-blur-md group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              <div className="flex flex-col gap-1.5 flex-1 justify-end w-full">
+                <span className="font-headline font-bold text-2xl tracking-tight leading-none uppercase tracking-widest">Transfer Asset</span>
+                <span className="text-sm opacity-80 font-medium">Secure peer-to-peer delegation</span>
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
+            </div>
+          </div>
 
-        {/* ═══ Gallery QR Dialog ════════════════════════════════════ */}
-        <Dialog open={!!galleryQRTicket} onOpenChange={(o) => !o && setGalleryQRTicket(null)}>
-          <DialogContent className="glass-strong">
-            <DialogHeader>
-              <DialogTitle>Ticket QR Code</DialogTitle>
-            </DialogHeader>
-            {galleryQRTicket && (
-              <div className="flex flex-col items-center py-4">
-                {galleryQRTicket.events && isQRActive(galleryQRTicket.events.date) ? (
-                  <DynamicQRDisplay
-                    ticketId={galleryQRTicket.id}
-                    qrSecret={galleryQRTicket.qr_secret}
-                    active={!!galleryQRTicket}
-                    venueLat={localDB.getEvent(galleryQRTicket.events?.id)?.venue_lat}
-                    venueLng={localDB.getEvent(galleryQRTicket.events?.id)?.venue_lng}
-                    geoRadiusM={localDB.getEvent(galleryQRTicket.events?.id)?.geo_radius_m}
-                  />
-                ) : (
-                  <>
-                    <QrCode className="h-24 w-24 text-muted-foreground/20 mb-4" />
-                    <p className="text-muted-foreground text-center">
-                      QR code activates 24 hours before the event
-                    </p>
-                  </>
-                )}
+          {/* Three Column Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Secondary Actions */}
+            <div className="bg-card p-6 rounded-2xl flex items-center gap-4 hover:bg-muted/50 transition-all cursor-pointer border border-border shadow-md group">
+              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-primary border border-border group-hover:border-primary/50 transition-colors shadow-sm">
+                <History className="w-5 h-5" />
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
+              <div className="flex flex-col gap-0.5">
+                <span className="font-bold text-sm text-foreground uppercase tracking-widest">History</span>
+                <span className="text-[10px] text-muted-foreground font-bold tracking-tight opacity-50">12 ledger entries</span>
+              </div>
+            </div>
 
-        {/* ═══ Gallery Resell Dialog ════════════════════════════════ */}
-        <Dialog
-          open={!!galleryResellTicket}
-          onOpenChange={(o) => { if (!o) { setGalleryResellTicket(null); setResalePrice(""); } }}
-        >
-          <DialogContent className="glass-strong">
-            <DialogHeader>
-              <DialogTitle>List NFT for Resale</DialogTitle>
-            </DialogHeader>
-            {galleryResellTicket && (
-              <div className="space-y-4 py-4">
-                <p className="text-sm text-muted-foreground">
-                  {galleryResellTicket.events?.name} — {galleryResellTicket.ticket_tiers?.tier_name}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Max price: <span className="text-foreground font-medium">{galleryResellTicket.ticket_tiers?.price} ETH</span> (face value)
-                </p>
-                <Input
-                  type="number"
-                  placeholder="Price in ETH"
-                  value={resalePrice}
-                  onChange={(e) => setResalePrice(e.target.value)}
-                  step="0.0001"
-                  max={galleryResellTicket.ticket_tiers?.price}
-                />
-                <Button
-                  className="w-full gradient-primary"
-                  onClick={() => {
-                    handleListForResale(galleryResellTicket.id, galleryResellTicket.ticket_tiers?.price || 0);
-                    setGalleryResellTicket(null);
-                  }}
-                >
-                  List NFT for Resale
-                </Button>
+            <div className="bg-card p-6 rounded-2xl flex items-center gap-4 hover:bg-muted/50 transition-all cursor-pointer border border-border shadow-md group">
+              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-primary border border-border group-hover:border-primary/50 transition-colors shadow-sm">
+                <ShieldCheck className="w-5 h-5" />
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      </motion.div>
+              <div className="flex flex-col gap-0.5">
+                <span className="font-bold text-sm text-foreground uppercase tracking-widest">Security</span>
+                <span className="text-[10px] text-muted-foreground font-bold tracking-tight opacity-50">Biometric active</span>
+              </div>
+            </div>
+
+            <div className="bg-card p-6 rounded-2xl flex items-center gap-4 hover:bg-muted/50 transition-all cursor-pointer border border-border shadow-md group">
+              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-amber-500 border border-border group-hover:border-amber-500/50 transition-colors shadow-sm">
+                <Map className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="font-bold text-sm text-foreground uppercase tracking-widest">Finder</span>
+                <span className="text-[10px] text-muted-foreground font-bold tracking-tight opacity-50">Near interactions</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
-};
-
-export default MyTickets;
+}

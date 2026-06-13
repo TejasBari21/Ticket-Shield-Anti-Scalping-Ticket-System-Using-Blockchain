@@ -1,11 +1,11 @@
-# FairPass - Blockchain-based Event Ticketing System
+# TicketShield - Blockchain-based Event Ticketing System
 
-A decentralized event ticketing platform built with React, Solidity smart contracts, and Supabase.
+A decentralized event ticketing platform built with React, Solidity smart contracts, and MongoDB.
 
 ## Project Structure
 
 ```
-fair-pass/
+ticketshield/
 ├── frontend/          # React + Vite + TypeScript + Tailwind
 │   ├── src/           # React components, pages, hooks, integrations
 │   ├── public/        # Static assets
@@ -13,10 +13,9 @@ fair-pass/
 │   ├── package.json   # Frontend dependencies
 │   └── vite.config.ts # Vite configuration
 │
-├── backend/           # Smart contracts + Supabase
+├── backend/           # Smart contracts + MongoDB API
 │   ├── contracts/     # Solidity smart contracts
 │   ├── scripts/       # Deployment & test scripts
-│   ├── supabase/      # Supabase migrations
 │   ├── deployments/   # Deployment records
 │   ├── hardhat.config.cjs
 │   └── package.json   # Backend dependencies
@@ -77,5 +76,5 @@ npm run update-abi         # Update ABI in frontend
 
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Framer Motion
 - **Blockchain**: Solidity, Hardhat, ethers.js
-- **Database**: Supabase (PostgreSQL)
+- **Database**: MongoDB
 - **State Management**: TanStack React Query

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TicketShield - Fraud Detection</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-container": "#d6a9ff",
+              "secondary-fixed-dim": "#ddb7ff",
+              "primary-fixed-dim": "#cbbeff",
+              "on-secondary-fixed": "#2c0051",
+              "tertiary-fixed": "#63f7ff",
+              "surface-variant": "#343440",
+              "tertiary": "#00dce5",
+              "inverse-surface": "#e3e0f1",
+              "inverse-primary": "#632ef6",
+              "surface-container-low": "#1b1a26",
+              "outline-variant": "#484456",
+              "surface-container-lowest": "#0d0d18",
+              "secondary-fixed": "#f0dbff",
+              "primary-fixed": "#e6deff",
+              "inverse-on-surface": "#302f3b",
+              "on-tertiary": "#003739",
+              "error-container": "#93000a",
+              "tertiary-container": "#007378",
+              "on-primary-fixed-variant": "#4b00d4",
+              "on-tertiary-fixed": "#002021",
+              "outline": "#938ea2",
+              "primary": "#cbbeff",
+              "surface-tint": "#cbbeff",
+              "secondary-container": "#6f00be",
+              "primary-container": "#6c3bff",
+              "on-surface": "#e3e0f1",
+              "surface-dim": "#12121d",
+              "on-secondary-fixed-variant": "#6900b3",
+              "on-secondary": "#490080",
+              "tertiary-fixed-dim": "#00dce5",
+              "surface-container-high": "#292935",
+              "on-error-container": "#ffdad6",
+              "background": "#12121d",
+              "on-background": "#e3e0f1",
+              "on-error": "#690005",
+              "error": "#ffb4ab",
+              "surface": "#12121d",
+              "on-tertiary-container": "#87f8ff",
+              "on-surface-variant": "#cac3d9",
+              "on-primary": "#330098",
+              "surface-container-highest": "#343440",
+              "surface-container": "#1f1e2a",
+              "on-primary-fixed": "#1d0061",
+              "surface-bright": "#383845",
+              "secondary": "#ddb7ff",
+              "on-primary-container": "#eae2ff",
+              "on-tertiary-fixed-variant": "#004f53"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0d0d18;
+            color: #e3e0f1;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass {
+            background: rgba(52, 52, 64, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(72, 68, 86, 0.15);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #6c3bff 0%, #ddb7ff 100%);
+        }
+        .sovereign-glow {
+            box-shadow: 0 0 40px rgba(203, 190, 255, 0.08);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface">
+<!-- Top Navigation (Shell Component) -->
+<header class="fixed top-0 left-0 right-0 z-50 glass">
+<div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden border border-outline-variant/20">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Professional male user profile avatar circular" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFQSyS_BDVhI5dHpjUJdt-raR1EOEymNvZC8xZF2VWoRv6hpOvmay2v3Rvf4KVZx6WCRHIk1DtX8j1dChtC-rdW3oRwXYTG1hUaTYFTh5YIeC-ObY4PgZW6tDZOHtDWe5I0YCQYcsSSCxGccf9kh_HBWuulvJaGKa5hd2766sj_u6KsB_W324Y6iEXt5tYYac8eHW292MgS0ACcHrylBw1zES9nUu93JnayzBgNlbE7UKr_YAVr21GXMcJGdMH5ZvMuBOUjPXvyKE"/>
+</div>
+<h1 class="font-headline font-extrabold text-xl tracking-tight text-on-surface">TicketShield</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</button>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto">
+<!-- Dashboard Header -->
+<section class="mb-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<span class="label-md font-bold uppercase tracking-widest text-primary mb-2 block">Security Engine</span>
+<h2 class="font-headline text-4xl font-extrabold md:text-5xl leading-tight">Fraud Detection</h2>
+</div>
+<div class="flex gap-3">
+<div class="bg-surface-container-high px-4 py-3 rounded-xl border-l-4 border-tertiary sovereign-glow">
+<span class="label-sm text-on-surface-variant block mb-1">System Health</span>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="font-bold text-tertiary">ACTIVE</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Threat Bento Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+<!-- Major Alert Card -->
+<div class="lg:col-span-2 glass rounded-xl p-8 flex flex-col justify-between overflow-hidden relative border-l-4 border-error">
+<div class="absolute -right-16 -top-16 w-64 h-64 bg-error/10 rounded-full blur-3xl"></div>
+<div class="relative z-10">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-12 h-12 bg-error-container rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div>
+<h3 class="font-headline font-bold text-2xl">Critical Anomaly Detected</h3>
+<p class="text-on-surface-variant text-sm">Large scale duplicate scan attempt at Main Gate B</p>
+</div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+<div class="bg-surface-container-lowest/50 p-4 rounded-xl border border-outline-variant/10">
+<span class="label-sm text-on-surface-variant block mb-1">Impact</span>
+<span class="font-bold text-error">128 Tickets</span>
+</div>
+<div class="bg-surface-container-lowest/50 p-4 rounded-xl border border-outline-variant/10">
+<span class="label-sm text-on-surface-variant block mb-1">Location</span>
+<span class="font-bold">Sector 7-G</span>
+</div>
+<div class="bg-surface-container-lowest/50 p-4 rounded-xl border border-outline-variant/10">
+<span class="label-sm text-on-surface-variant block mb-1">Time</span>
+<span class="font-bold">14:28:01</span>
+</div>
+<div class="bg-surface-container-lowest/50 p-4 rounded-xl border border-outline-variant/10">
+<span class="label-sm text-on-surface-variant block mb-1">Confidence</span>
+<span class="font-bold text-tertiary">99.4%</span>
+</div>
+</div>
+</div>
+<div class="flex gap-4">
+<button class="primary-gradient text-on-primary-fixed font-bold px-8 py-4 rounded-xl flex-1 text-center shadow-lg transition-transform hover:scale-[1.02]">
+                        Freeze Entry Point
+                    </button>
+<button class="bg-surface-variant/40 text-on-surface px-8 py-4 rounded-xl font-bold border border-outline-variant/20 hover:bg-surface-variant transition-colors">
+                        Investigate
+                    </button>
+</div>
+</div>
+<!-- Stats Column -->
+<div class="flex flex-col gap-6">
+<div class="bg-surface-container p-6 rounded-xl border border-outline-variant/10 flex items-center justify-between">
+<div>
+<span class="label-sm text-on-surface-variant block mb-1">Scans (Last Hour)</span>
+<span class="text-3xl font-headline font-extrabold">4,812</span>
+</div>
+<div class="h-12 w-24 bg-surface-container-high rounded-lg overflow-hidden flex items-end p-1 gap-1">
+<div class="w-full bg-primary/20 h-1/2 rounded-sm"></div>
+<div class="w-full bg-primary/20 h-3/4 rounded-sm"></div>
+<div class="w-full bg-primary h-full rounded-sm"></div>
+<div class="w-full bg-primary/60 h-2/3 rounded-sm"></div>
+</div>
+</div>
+<div class="bg-surface-container-high p-6 rounded-xl border border-outline-variant/10 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4">
+<span class="material-symbols-outlined text-tertiary/20 text-5xl">verified_user</span>
+</div>
+<span class="label-sm text-on-surface-variant block mb-1">Prevented Loss</span>
+<span class="text-3xl font-headline font-extrabold text-tertiary">$12,450.00</span>
+<p class="text-xs text-on-surface-variant mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">trending_up</span>
+                        +14% from previous event
+                    </p>
+</div>
+</div>
+</div>
+<!-- Suspicious Activities Feed -->
+<section>
+<div class="flex items-center justify-between mb-8">
+<h3 class="font-headline text-2xl font-bold">Live Activity Feed</h3>
+<div class="flex items-center gap-2 bg-surface-container-low p-1 rounded-full border border-outline-variant/10">
+<button class="px-4 py-1.5 rounded-full bg-surface-variant text-sm font-bold">All</button>
+<button class="px-4 py-1.5 rounded-full text-sm font-medium text-on-surface-variant hover:text-on-surface">Flagged</button>
+<button class="px-4 py-1.5 rounded-full text-sm font-medium text-on-surface-variant hover:text-on-surface">Resolved</button>
+</div>
+</div>
+<div class="space-y-4">
+<!-- Activity Row 1 -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-all p-5 rounded-xl flex flex-wrap items-center justify-between gap-6 border border-outline-variant/10 sovereign-glow">
+<div class="flex items-center gap-4 flex-1 min-w-[300px]">
+<div class="w-12 h-12 bg-secondary-container rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">location_off</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="font-bold text-lg">Location Mismatch</span>
+<span class="bg-secondary-container/30 text-secondary text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">Suspicious</span>
+</div>
+<p class="text-sm text-on-surface-variant">Ticket <span class="font-mono text-primary">#SHIELD-8821</span> scanned in <span class="text-on-surface font-medium">London</span> &amp; <span class="text-on-surface font-medium">New York</span> within 4 mins.</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-right">
+<span class="block text-sm font-bold">14:52:10</span>
+<span class="label-sm text-on-surface-variant">Timestamp</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container-highest hover:bg-surface-variant border border-outline-variant/20 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Activity Row 2 -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-all p-5 rounded-xl flex flex-wrap items-center justify-between gap-6 border border-outline-variant/10">
+<div class="flex items-center gap-4 flex-1 min-w-[300px]">
+<div class="w-12 h-12 bg-error-container rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">content_copy</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="font-bold text-lg">Duplicate Scan Attempt</span>
+<span class="bg-error-container/30 text-error text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">High Risk</span>
+</div>
+<p class="text-sm text-on-surface-variant">Ticket <span class="font-mono text-primary">#SHIELD-4110</span> rejected at Gate 4. Already checked in at 13:40.</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-right">
+<span class="block text-sm font-bold">14:48:05</span>
+<span class="label-sm text-on-surface-variant">Timestamp</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container-highest hover:bg-surface-variant border border-outline-variant/20 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Activity Row 3 -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-all p-5 rounded-xl flex flex-wrap items-center justify-between gap-6 border border-outline-variant/10">
+<div class="flex items-center gap-4 flex-1 min-w-[300px]">
+<div class="w-12 h-12 bg-tertiary-container/20 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">encrypted</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="font-bold text-lg">Wallet Verification Failed</span>
+<span class="bg-tertiary-container/30 text-tertiary text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">Verification</span>
+</div>
+<p class="text-sm text-on-surface-variant">Address <span class="font-mono text-primary">0x71C...4e2</span> failed ownership signature check for VIP Pass.</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-right">
+<span class="block text-sm font-bold">14:45:22</span>
+<span class="label-sm text-on-surface-variant">Timestamp</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container-highest hover:bg-surface-variant border border-outline-variant/20 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Activity Row 4 -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-all p-5 rounded-xl flex flex-wrap items-center justify-between gap-6 border border-outline-variant/10">
+<div class="flex items-center gap-4 flex-1 min-w-[300px]">
+<div class="w-12 h-12 bg-surface-variant rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">history</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="font-bold text-lg">Batch Ticket Burn</span>
+<span class="bg-surface-variant/30 text-on-surface-variant text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">Information</span>
+</div>
+<p class="text-sm text-on-surface-variant">45 early-bird tickets successfully finalized on the ledger.</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-right">
+<span class="block text-sm font-bold">14:30:00</span>
+<span class="label-sm text-on-surface-variant">Timestamp</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container-highest hover:bg-surface-variant border border-outline-variant/20 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation (Shell Component) -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 glass">
+<div class="max-w-md mx-auto px-6 h-20 flex items-center justify-between">
+<button class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-bold">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">confirmation_number</span>
+<span class="text-[10px] font-bold">Tickets</span>
+</button>
+<div class="relative -top-6">
+<button class="w-14 h-14 primary-gradient rounded-full flex items-center justify-center shadow-lg shadow-primary-container/40">
+<span class="material-symbols-outlined text-on-primary-fixed text-3xl">qr_code_scanner</span>
+</button>
+</div>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">event</span>
+<span class="text-[10px] font-bold">Events</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-bold">Profile</span>
+</button>
+</div>
+</nav>
+</body></html>

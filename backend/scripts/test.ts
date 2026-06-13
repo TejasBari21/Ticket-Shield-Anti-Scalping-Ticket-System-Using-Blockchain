@@ -9,14 +9,14 @@ async function main() {
   // Test 1: Deploy contract
   console.log("Test 1: Contract Deployment");
   const EventTicket = await hre.ethers.getContractFactory("EventTicket");
-  const contract = await EventTicket.deploy();
+  const [deployerSigner] = await hre.ethers.getSigners();
+  const contract = await EventTicket.deploy(deployerSigner.address);
   await contract.waitForDeployment();
   const address = await contract.getAddress();
   console.log(`✅ Contract deployed at: ${address}\n`);
 
   // Test 2: Create Event
   console.log("Test 2: Create Event");
-  const [deployerSigner] = await hre.ethers.getSigners();
   const futureDate = Math.floor(Date.now() / 1000) + 86400 * 30; // 30 days from now
 
   const createEventTx = await contract.createEvent(

@@ -8,6 +8,7 @@ import {
   initializeContract,
   getNetworkChainId,
 } from "./contractService";
+import { getContractBalance } from "./contractService";
 import { BrowserProvider } from "ethers";
 
 const contractAddress = (import.meta as any).env.VITE_CONTRACT_ADDRESS;
@@ -79,8 +80,8 @@ export async function getAdminStats(): Promise<AdminStats | null> {
   try {
     const contract = getContract() as any;
 
-    const { totalBalance, feesCollected } = await contract.getContractBalance();
-    const platformFeePercentage = await contract.platformFeePercentage();
+    const { totalBalance, feesCollected } = await getContractBalance();
+    const platformFeePercentage = await (contract as any).platformFeePercentage();
     const chainId = await getNetworkChainId();
 
     return {
@@ -101,10 +102,8 @@ export async function getAdminStats(): Promise<AdminStats | null> {
 export async function withdrawFees(): Promise<string> {
   await ensureContractInitialized();
   try {
-    const contract = getContract() as any;
-    const tx = await contract.withdrawPlatformFees();
-    const receipt = await tx.wait();
-    return receipt?.hash || "";
+    // Withdraw is no longer needed – ticket payments go directly to admin wallet
+    throw new Error("Withdraw is disabled: ticket payments are sent directly to the admin wallet.");
   } catch (error) {
     console.error("Failed to withdraw fees:", error);
     throw error;
@@ -121,10 +120,8 @@ export async function updatePlatformFee(newPercentage: number): Promise<string> 
       throw new Error("Fee percentage must be between 0 and 20");
     }
 
-    const contract = getContract() as any;
-    const tx = await contract.setPlatformFeePercentage(newPercentage);
-    const receipt = await tx.wait();
-    return receipt?.hash || "";
+    // setPlatformFeePercentage has been removed from the contract
+    throw new Error("Platform fee update is disabled: payments go directly to admin wallet.");
   } catch (error) {
     console.error("Failed to update platform fee:", error);
     throw error;

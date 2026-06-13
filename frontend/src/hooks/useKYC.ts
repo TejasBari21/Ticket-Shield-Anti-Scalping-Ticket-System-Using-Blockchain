@@ -25,7 +25,7 @@ export interface SubmitKYCData {
   idNumber: string;
 }
 
-const KYC_KEY = "fairpass_kyc";
+const KYC_KEY = "ticketshield_kyc";
 
 function readKYCStore(): Record<string, KYCSubmission> {
   try {

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TicketShield - Secure Digital Ticket Verification</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-container": "#d6a9ff",
+              "secondary-fixed-dim": "#ddb7ff",
+              "primary-fixed-dim": "#cbbeff",
+              "on-secondary-fixed": "#2c0051",
+              "tertiary-fixed": "#63f7ff",
+              "surface-variant": "#343440",
+              "tertiary": "#00dce5",
+              "inverse-surface": "#e3e0f1",
+              "inverse-primary": "#632ef6",
+              "surface-container-low": "#1b1a26",
+              "outline-variant": "#484456",
+              "surface-container-lowest": "#0d0d18",
+              "secondary-fixed": "#f0dbff",
+              "primary-fixed": "#e6deff",
+              "inverse-on-surface": "#302f3b",
+              "on-tertiary": "#003739",
+              "error-container": "#93000a",
+              "tertiary-container": "#007378",
+              "on-primary-fixed-variant": "#4b00d4",
+              "on-tertiary-fixed": "#002021",
+              "outline": "#938ea2",
+              "primary": "#cbbeff",
+              "surface-tint": "#cbbeff",
+              "secondary-container": "#6f00be",
+              "primary-container": "#6c3bff",
+              "on-surface": "#e3e0f1",
+              "surface-dim": "#12121d",
+              "on-secondary-fixed-variant": "#6900b3",
+              "on-secondary": "#490080",
+              "tertiary-fixed-dim": "#00dce5",
+              "surface-container-high": "#292935",
+              "on-error-container": "#ffdad6",
+              "background": "#12121d",
+              "on-background": "#e3e0f1",
+              "on-error": "#690005",
+              "error": "#ffb4ab",
+              "surface": "#12121d",
+              "on-tertiary-container": "#87f8ff",
+              "on-surface-variant": "#cac3d9",
+              "on-primary": "#330098",
+              "surface-container-highest": "#343440",
+              "surface-container": "#1f1e2a",
+              "on-primary-fixed": "#1d0061",
+              "surface-bright": "#383845",
+              "secondary": "#ddb7ff",
+              "on-primary-container": "#eae2ff",
+              "on-tertiary-fixed-variant": "#004f53"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0d0d18;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        .glass-panel {
+            background: rgba(52, 52, 64, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(202, 195, 217, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #cbbeff 0%, #ddb7ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .main-gradient {
+            background: linear-gradient(135deg, #6c3bff 0%, #ddb7ff 100%);
+        }
+        .shimmer-overlay {
+            background: linear-gradient(90deg, transparent, rgba(203, 190, 255, 0.1), transparent);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body text-on-surface flex items-center justify-center min-h-screen">
+<!-- Background Atmospheric Elements -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+<div class="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary-container opacity-20 blur-[120px] rounded-full"></div>
+<div class="absolute -bottom-[10%] -right-[10%] w-[50%] h-[50%] bg-secondary-container opacity-10 blur-[150px] rounded-full"></div>
+</div>
+<!-- Main Splash Content -->
+<div class="relative z-10 flex flex-col items-center justify-center text-center px-6">
+<!-- Animated-style Shield + Ticket Logo -->
+<div class="relative mb-12">
+<!-- Outer Glow -->
+<div class="absolute inset-0 bg-primary blur-[40px] opacity-20 rounded-full"></div>
+<!-- Shield Base -->
+<div class="relative w-40 h-44 main-gradient rounded-xl shadow-[0_20px_50px_rgba(108,59,255,0.3)] flex items-center justify-center overflow-hidden">
+<!-- Shimmer Effect -->
+<div class="absolute inset-0 shimmer-overlay"></div>
+<!-- Inner Shield Design -->
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-on-primary-fixed text-7xl font-light" style="font-variation-settings: 'FILL' 1;">
+                        shield
+                    </span>
+<!-- Ticket Overlay -->
+<div class="absolute bg-surface-container-highest px-3 py-1 rounded-lg border border-primary/20 transform rotate-[-5deg] shadow-xl">
+<span class="material-symbols-outlined text-primary text-3xl">
+                            confirmation_number
+                        </span>
+</div>
+</div>
+<!-- Technical Details Detail -->
+<div class="absolute bottom-0 left-0 right-0 h-1 bg-tertiary opacity-40"></div>
+</div>
+</div>
+<!-- Brand Identity -->
+<div class="space-y-4">
+<h1 class="font-headline text-5xl md:text-6xl font-extrabold tracking-tight text-on-surface">
+                TicketShield
+            </h1>
+<p class="font-label text-sm uppercase tracking-[0.2em] text-on-surface-variant font-medium">
+                Secure Digital Ticket Verification
+            </p>
+</div>
+<!-- Sovereign Vault Meta Info (Asymmetric Detail) -->
+<div class="mt-24 grid grid-cols-2 gap-8 w-full max-w-md">
+<div class="text-left border-l border-primary/20 pl-4">
+<p class="text-[0.65rem] uppercase font-label text-on-surface-variant mb-1">Status</p>
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-tertiary"></div>
+<span class="text-xs font-semibold">Ledger Online</span>
+</div>
+</div>
+<div class="text-left border-l border-primary/20 pl-4">
+<p class="text-[0.65rem] uppercase font-label text-on-surface-variant mb-1">Encryption</p>
+<div class="flex items-center gap-2">
+<span class="text-xs font-semibold">AES-256 SECURED</span>
+</div>
+</div>
+</div>
+<!-- Footer Visual Hint -->
+<div class="fixed bottom-12 flex flex-col items-center gap-4">
+<div class="w-1 h-12 bg-gradient-to-b from-primary/40 to-transparent rounded-full"></div>
+<p class="text-[0.6rem] uppercase tracking-widest text-on-surface-variant/60">Initializing Sovereign Vault</p>
+</div>
+</div>
+<!-- Abstract Pattern Decorative Card -->
+<div class="fixed -right-24 top-1/4 transform rotate-12 opacity-30 select-none">
+<div class="w-64 h-96 glass-panel rounded-xl flex items-center justify-center">
+<div class="w-full h-full p-8 flex flex-col justify-between">
+<div class="h-4 w-1/2 bg-surface-variant rounded-full"></div>
+<div class="space-y-2">
+<div class="h-2 w-full bg-surface-variant rounded-full"></div>
+<div class="h-2 w-3/4 bg-surface-variant rounded-full"></div>
+</div>
+<div class="h-24 w-24 bg-surface-variant rounded-xl self-center"></div>
+</div>
+</div>
+</div>
+<!-- Decorative Texture Bottom Left -->
+<div class="fixed -left-20 -bottom-20 w-80 h-80 bg-primary-container/10 blur-[100px] rounded-full"></div>
+</body></html>

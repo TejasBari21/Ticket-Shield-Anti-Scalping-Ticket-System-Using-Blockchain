@@ -1,8 +1,8 @@
 {
-  "name": "fair-pass",
+  "name": "ticketshield",
   "private": true,
   "version": "1.0.0",
-  "description": "FairPass - Blockchain-based Event Ticketing System",
+  "description": "TicketShield - Blockchain-based Event Ticketing System",
   "scripts": {
     "dev": "npm run dev --prefix frontend",
     "build": "npm run build --prefix frontend",
@@ -14,6 +14,9 @@
     "install:all": "npm install --prefix frontend && npm install --prefix backend"
   },
   "dependencies": {
-    "ethers": "^6.16.0"
+    "axios": "^1.13.6",
+    "ethers": "^6.16.0",
+    "firebase": "^12.10.0",
+    "jsonwebtoken": "^9.0.3"
   }
 }

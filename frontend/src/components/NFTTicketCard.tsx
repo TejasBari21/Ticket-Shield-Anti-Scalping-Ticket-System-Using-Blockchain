@@ -9,8 +9,11 @@ import {
   MapPin,
   Tag,
   Link2,
+  Clock,
+  CheckCircle,
 } from "lucide-react";
 import { format } from "date-fns";
+import { formatTicketTimestamp, formatTicketDate, formatTicketTime } from "@/lib/ticketTimestamp";
 
 interface TicketWithDetails {
   id: string;
@@ -46,6 +49,10 @@ const holoBorders = [
   "from-amber-400 via-orange-500 to-pink-500",
 ];
 
+/**
+ * Professional NFT Ticket Card Component
+ * Displays ticket information in a premium pass-style layout
+ */
 const NFTTicketCard = ({
   ticket,
   index,
@@ -63,6 +70,15 @@ const NFTTicketCard = ({
 
   const holoGradient = holoBorders[index % holoBorders.length];
 
+  // Format dates for display
+  const eventDate = ticket.events?.date ? formatTicketDate(ticket.events.date) : "N/A";
+  const eventTime = ticket.events?.date ? formatTicketTime(ticket.events.date) : "N/A";
+  const bookedAt = formatTicketTimestamp(ticket.created_at);
+
+  // Status indicator
+  const statusLabel = ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1);
+  const isActive = ticket.status === "active";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20, scale: 0.97 }}
@@ -71,132 +87,210 @@ const NFTTicketCard = ({
       className="relative rounded-2xl overflow-hidden group cursor-default"
       style={{ background: "hsl(var(--card))" }}
     >
-      {/* Holographic gradient top border */}
-      <div className={`h-1 w-full bg-gradient-to-r ${holoGradient}`} />
+      {/* Premium gradient border */}
+      <div className={`h-1.5 w-full bg-gradient-to-r ${holoGradient}`} />
 
-      {/* Subtle background glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] via-transparent to-violet-500/[0.04] pointer-events-none rounded-2xl" />
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] via-transparent to-violet-500/[0.04] pointer-events-none" />
 
       {/* Shimmer overlay on hover */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none rounded-2xl" />
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
 
-      <div className="p-5 relative">
-        {/* ── Header ─────────────────────────────────────── */}
-        <div className="flex items-start justify-between mb-4 gap-2">
+      <div className="p-5 relative space-y-4">
+        {/* ═══════════════════════════════════════════════════════
+            HEADER SECTION: Event Name + Status Badge
+        ═══════════════════════════════════════════════════════ */}
+        <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className="flex items-center gap-1.5 mb-2">
               <ShieldCheck className="h-3.5 w-3.5 text-primary flex-shrink-0" />
               <span className="text-[10px] font-semibold text-primary tracking-widest uppercase">
                 NFT Ticket
               </span>
             </div>
-            <h3 className="font-bold text-base leading-snug truncate pr-2">
+            <h3 className="font-bold text-sm leading-snug pr-2">
               {ticket.events?.name}
             </h3>
           </div>
 
-          {/* Token ID badge */}
-          <div className="flex-shrink-0 border border-primary/25 bg-primary/[0.08] rounded-xl px-2.5 py-2 text-center">
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider leading-none mb-1">
-              Token
-            </p>
-            <p className="font-mono font-bold text-primary text-[11px] leading-none">
-              {tokenDisplay}
-            </p>
+          {/* Status Badge */}
+          <div className="flex-shrink-0">
+            <Badge
+              className={`text-[9px] border font-bold flex items-center gap-1 ${
+                statusStyles[ticket.status] || "bg-muted/30 text-muted-foreground border-muted"
+              }`}
+            >
+              {isActive && <CheckCircle className="h-3 w-3" />}
+              {statusLabel.toUpperCase()}
+            </Badge>
           </div>
         </div>
 
-        {/* ── Event Details ──────────────────────────────── */}
-        <div className="space-y-1.5 mb-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Tag className="h-3 w-3 flex-shrink-0" />
-            <span>
-              {ticket.ticket_tiers?.tier_name}
-              <span className="mx-1.5 opacity-40">·</span>
-              {ticket.ticket_tiers?.price} ETH
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Calendar className="h-3 w-3 flex-shrink-0" />
-            <span>
-              {ticket.events &&
-                format(new Date(ticket.events.date), "MMM d, yyyy · h:mm a")}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3 flex-shrink-0" />
-            <span className="truncate">{ticket.events?.venue}</span>
-          </div>
-        </div>
-
-        {/* ── Badges ─────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-1.5 mb-4">
-          <Badge
-            className={`text-[10px] border ${statusStyles[ticket.status] || ""}`}
-          >
-            {ticket.status}
-          </Badge>
-          <Badge
-            variant="outline"
-            className="text-[10px] border-violet-500/30 text-violet-400 bg-violet-500/[0.07]"
-          >
-            ERC-721
-          </Badge>
-          <Badge
-            variant="outline"
-            className="text-[10px] border-emerald-500/30 text-emerald-400 bg-emerald-500/[0.07]"
-          >
-            On-Chain
-          </Badge>
-        </div>
-
-        {/* ── TX Hash ────────────────────────────────────── */}
-        {txShort && (
-          <div className="mb-4 rounded-lg bg-muted/30 px-3 py-2 border border-muted/40">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <Link2 className="h-2.5 w-2.5 text-muted-foreground" />
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wider">
-                Transaction
+        {/* ═══════════════════════════════════════════════════════
+            TOKEN SECTION: Token ID Badge
+        ═══════════════════════════════════════════════════════ */}
+        <div className="border-t border-border/50 pt-3">
+          <div className="inline-flex border border-primary/25 bg-primary/[0.08] rounded-lg px-3 py-2">
+            <div className="text-center">
+              <p className="text-[8px] text-muted-foreground uppercase tracking-widest font-bold leading-none mb-1.5">
+                Token ID
+              </p>
+              <p className="font-mono font-bold text-primary text-[10px] leading-none">
+                {tokenDisplay}
               </p>
             </div>
-            <p className="text-[11px] font-mono text-muted-foreground">{txShort}</p>
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════
+            EVENT DETAILS SECTION
+        ═══════════════════════════════════════════════════════ */}
+        <div className="border-t border-border/50 pt-3 space-y-2.5">
+          {/* Date & Time */}
+          <div className="flex items-start gap-3">
+            <Calendar className="h-4 w-4 text-primary/60 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[8px] text-muted-foreground uppercase tracking-wider font-bold mb-0.5">
+                Event Date & Time
+              </p>
+              <p className="text-xs font-semibold text-foreground">
+                {eventDate}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {eventTime}
+              </p>
+            </div>
+          </div>
+
+          {/* Venue */}
+          <div className="flex items-start gap-3">
+            <MapPin className="h-4 w-4 text-primary/60 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[8px] text-muted-foreground uppercase tracking-wider font-bold mb-0.5">
+                Venue & Location
+              </p>
+              <p className="text-xs font-semibold text-foreground truncate">
+                {ticket.events?.venue}
+              </p>
+              {ticket.events?.location && (
+                <p className="text-[10px] text-muted-foreground truncate">
+                  {ticket.events.location}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Tier & Price */}
+          <div className="flex items-start gap-3">
+            <Tag className="h-4 w-4 text-primary/60 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-[8px] text-muted-foreground uppercase tracking-wider font-bold mb-0.5">
+                Ticket Tier & Price
+              </p>
+              <p className="text-xs font-semibold text-foreground">
+                {ticket.ticket_tiers?.tier_name}
+                <span className="mx-2 opacity-40">·</span>
+                <span className="text-primary font-bold">{ticket.ticket_tiers?.price} ETH</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════
+            BOOKING INFO SECTION
+        ═══════════════════════════════════════════════════════ */}
+        <div className="border-t border-border/50 pt-3">
+          <div className="flex items-start gap-3">
+            <Clock className="h-4 w-4 text-primary/60 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-[8px] text-muted-foreground uppercase tracking-wider font-bold mb-0.5">
+                Booked On
+              </p>
+              <p className="text-xs font-semibold text-foreground">
+                {bookedAt}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════
+            TRANSACTION SECTION (if available)
+        ═══════════════════════════════════════════════════════ */}
+        {txShort && (
+          <div className="border-t border-border/50 pt-3">
+            <div className="rounded-lg bg-muted/20 border border-muted/40 px-3 py-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Link2 className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                <p className="text-[8px] text-muted-foreground uppercase tracking-wider font-bold">
+                  Transaction
+                </p>
+              </div>
+              <p className="text-[10px] font-mono text-muted-foreground break-all">
+                {txShort}
+              </p>
+            </div>
           </div>
         )}
 
-        {/* ── Actions ────────────────────────────────────── */}
-        <div className="flex gap-2">
+        {/* ═══════════════════════════════════════════════════════
+            ACTION BUTTONS
+        ═══════════════════════════════════════════════════════ */}
+        <div className="border-t border-border/50 pt-3 grid grid-cols-2 gap-2">
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 gap-1.5 text-xs h-8"
-            disabled={ticket.status !== "active"}
+            className="gap-1.5 text-xs h-8 disabled:opacity-50"
+            disabled={!isActive}
             onClick={onShowQR}
+            title={isActive ? "Show QR Code for entry" : "Only active tickets can be scanned"}
           >
             <QrCode className="h-3.5 w-3.5" />
             QR Code
           </Button>
 
-          {ticket.status === "active" && (
+          {isActive && (
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 gap-1.5 text-xs h-8"
+              className="gap-1.5 text-xs h-8"
               onClick={onShowResell}
+              title="List ticket for resale"
             >
               <ArrowUpRight className="h-3.5 w-3.5" />
               Resell
             </Button>
           )}
 
-          <Button
+          {!isActive && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs h-8 border-primary/30 text-primary hover:bg-primary/10"
+              onClick={onShowDetails}
+              title="View details"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Details
+            </Button>
+          )}
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════
+            OTHER BADGES (ERC-721, On-Chain)
+        ═══════════════════════════════════════════════════════ */}
+        <div className="border-t border-border/50 pt-3 flex flex-wrap gap-1.5">
+          <Badge
             variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs h-8 border-primary/30 text-primary hover:bg-primary/10"
-            title="View NFT Details"
-            onClick={onShowDetails}
+            className="text-[9px] border-violet-500/30 text-violet-400 bg-violet-500/[0.07]"
           >
-            <ExternalLink className="h-3.5 w-3.5" />
-          </Button>
+            ERC-721
+          </Badge>
+          <Badge
+            variant="outline"
+            className="text-[9px] border-emerald-500/30 text-emerald-400 bg-emerald-500/[0.07]"
+          >
+            On-Chain
+          </Badge>
         </div>
       </div>
     </motion.div>

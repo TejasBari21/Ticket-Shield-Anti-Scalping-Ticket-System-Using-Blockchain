@@ -1,248 +1,299 @@
-import { motion } from "framer-motion";
-import { Wallet, Search, Ticket, Shield, ArrowRight, Zap, Lock, Users, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Shield, ArrowRight, CheckCircle2, FileText, Activity, RefreshCw, Ticket } from "lucide-react";
 
-const features = [
-  {
-    icon: Lock,
-    title: "Anti-Scalping",
-    description: "Smart contracts enforce fair pricing with resale price caps set by organizers.",
-    color: "from-violet-500/20 to-purple-600/20",
-    iconColor: "text-violet-400",
-  },
-  {
-    icon: Zap,
-    title: "Instant Verification",
-    description: "Time-locked QR codes activate hours before the event for secure check-in.",
-    color: "from-amber-500/20 to-orange-600/20",
-    iconColor: "text-amber-400",
-  },
-  {
-    icon: Users,
-    title: "Fair Access",
-    description: "Per-wallet purchase limits prevent bulk buying and bot activity.",
-    color: "from-cyan-500/20 to-blue-600/20",
-    iconColor: "text-cyan-400",
-  },
-  {
-    icon: Shield,
-    title: "Blockchain Secured",
-    description: "Every ticket is an NFT with immutable ownership records on-chain.",
-    color: "from-emerald-500/20 to-green-600/20",
-    iconColor: "text-emerald-400",
-  },
-];
-
-const steps = [
-  { num: "01", icon: Wallet, title: "Connect Wallet", desc: "Link your MetaMask wallet to get started" },
-  { num: "02", icon: Search, title: "Browse Events", desc: "Discover concerts, sports, and more" },
-  { num: "03", icon: Ticket, title: "Buy Tickets", desc: "Purchase NFT tickets at fair prices" },
-];
-
-const Index = () => {
+export default function Index() {
   return (
-    <div className="relative">
-      {/* Hero */}
-      <section className="relative min-h-[88vh] flex items-center overflow-hidden">
-        {/* Animated background orbs */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-[15%] left-[20%] w-[500px] h-[500px] rounded-full bg-primary/8 blur-[150px] animate-float" />
-          <div className="absolute bottom-[10%] right-[15%] w-[400px] h-[400px] rounded-full bg-neon-pink/6 blur-[130px] animate-float" style={{ animationDelay: "3s" }} />
-          <div className="absolute top-[50%] left-[55%] w-[300px] h-[300px] rounded-full bg-neon-cyan/5 blur-[120px] animate-float" style={{ animationDelay: "1.5s" }} />
+    <div className="bg-background min-h-screen text-foreground font-body overflow-x-hidden selection:bg-primary/15">
+      {/* Navigation Bar */}
+      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1BA6A6] to-[#7ED4D4] flex items-center justify-center shadow-lg shadow-[#1BA6A6]/20">
+              <Shield className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-headline font-bold text-xl tracking-tight text-[#1F2933]">TicketShield</span>
+          </div>
+          
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-[#6B7280]">
+            <a href="#features" className="hover:text-[#1BA6A6] transition-colors">Features</a>
+            <a href="#solutions" className="hover:text-[#1BA6A6] transition-colors">Solutions</a>
+            <a href="#pricing" className="hover:text-[#1BA6A6] transition-colors">Pricing</a>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Link to="/login" className="text-sm font-bold text-[#6B7280] hover:text-[#1F2933] transition-colors">
+              Login
+            </Link>
+            <Link to="/login" className="px-5 py-2.5 bg-[#1BA6A6] text-white font-bold text-sm rounded-lg hover:opacity-90 transition-all shadow-lg shadow-[#1BA6A6]/20">
+              Get Started
+            </Link>
+          </div>
         </div>
+      </nav>
 
-        {/* Dot grid pattern */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: "radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
-        }} />
-
-        <div className="container mx-auto px-6 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-4xl mx-auto text-center"
+      <main className="pt-32 pb-20">
+        {/* Hero Section */}
+        <section className="max-w-7xl mx-auto px-6 pt-20 pb-32 grid lg:grid-cols-2 gap-16 items-center">
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="flex flex-col gap-6"
           >
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="inline-flex items-center gap-2.5 glass rounded-full px-5 py-2 mb-10 text-sm text-muted-foreground"
-            >
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span>Powered by Ethereum Smart Contracts</span>
-              <div className="w-1.5 h-1.5 rounded-full bg-neon-green animate-pulse" />
-            </motion.div>
-
-            {/* Headline */}
-            <h1 className="text-5xl sm:text-6xl md:text-8xl font-extrabold leading-[1.05] mb-8 tracking-tight">
-              <span className="gradient-text">Fair Tickets.</span>
-              <br />
-              <span className="text-foreground">No Scalpers.</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1BA6A6]/10 border border-[#1BA6A6]/20 w-fit">
+              <div className="w-2 h-2 rounded-full bg-[#1BA6A6] animate-pulse" />
+              <span className="text-[10px] font-bold text-[#1BA6A6] tracking-widest uppercase">Web3 Secured</span>
+            </div>
+            
+            <h1 className="font-headline text-5xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight text-[#1F2933]">
+              The Sovereign <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1BA6A6] to-[#7ED4D4]">Vault of Digital</span><br/>
+              Access
             </h1>
-
-            {/* Subline */}
-            <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
-              The Web3 ticketing platform where smart contracts enforce fair pricing and
-              every ticket is secured on the blockchain.
+            
+            <p className="text-lg text-[#6B7280] max-w-lg leading-relaxed font-medium">
+              Eliminate fraud, prevent duplicates, and reclaim control of your event ticketing with the power of blockchain verification.
             </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button asChild size="lg" className="btn-primary text-lg px-10 h-14 gap-3 rounded-xl w-full sm:w-auto">
-                <Link to="/login">
-                  Get Started
-                  <ArrowRight className="h-5 w-5" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="btn-outline-glow text-lg px-10 h-14 rounded-xl w-full sm:w-auto">
-                <Link to="/events">Explore Events</Link>
-              </Button>
+            
+            <div className="flex flex-wrap items-center gap-4 mt-4">
+              <Link to="/events" className="px-8 py-4 bg-[#1BA6A6] text-white font-bold rounded-xl hover:scale-105 transition-transform shadow-xl shadow-[#1BA6A6]/30">
+                Secure Your Event
+              </Link>
+              <button className="px-8 py-4 bg-white border border-[#E5E7EB] text-[#1F2933] font-bold rounded-xl hover:bg-[#F5F7F8] transition-colors text-sm shadow-sm">
+                View Demo
+              </button>
             </div>
+          </motion.div>
 
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
-              className="flex flex-wrap justify-center gap-8 sm:gap-16 mt-16 pt-8 border-t border-white/[0.06]"
-            >
-              {[
-                { value: "100%", label: "Fair Pricing" },
-                { value: "NFT", label: "Backed Tickets" },
-                { value: "0%", label: "Scalper Success" },
-              ].map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <div className="text-2xl sm:text-3xl font-bold gradient-text">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
+          <motion.div 
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="relative"
+          >
+            {/* Abstract UI Mockup */}
+            <div className="relative aspect-square md:aspect-[4/3] rounded-3xl border border-[#E5E7EB] bg-white shadow-2xl flex items-center justify-center p-8">
+              <div className="absolute inset-0 bg-[#1BA6A6]/5 blur-3xl rounded-full" />
+              
+              <div className="w-full max-w-md bg-white border border-[#E5E7EB] rounded-2xl shadow-xl overflow-hidden">
+                <div className="h-12 border-b border-[#E5E7EB] bg-[#F5F7F8] flex items-center px-4 gap-2">
+                  <div className="w-3 h-3 rounded-full bg-[#E5E7EB]" />
+                  <div className="w-3 h-3 rounded-full bg-[#E5E7EB]" />
+                  <div className="w-3 h-3 rounded-full bg-[#E5E7EB]" />
                 </div>
+                <div className="p-6 space-y-4">
+                  <div className="w-3/4 h-6 bg-[#F5F7F8] rounded-md" />
+                  <div className="w-1/2 h-4 bg-[#F5F7F8] rounded-md" />
+                  
+                  <div className="pt-6 grid grid-cols-2 gap-4">
+                    <div className="aspect-square rounded-xl bg-gradient-to-br from-[#1BA6A6]/10 to-[#7ED4D4]/10 border border-[#E5E7EB] flex items-center justify-center">
+                      <Ticket className="w-12 h-12 text-[#1BA6A6]/30" />
+                    </div>
+                    <div className="space-y-3">
+                      <div className="w-full h-8 bg-[#F5F7F8] rounded-md" />
+                      <div className="w-full h-8 bg-[#F5F7F8] rounded-md" />
+                      <div className="w-2/3 h-8 bg-[#F5F7F8] rounded-md" />
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 bg-[#FACC15]/10 border-t border-[#FACC15]/20 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#FACC15]/20 flex items-center justify-center">
+                    <CheckCircle2 className="w-4 h-4 text-[#FACC15]" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-[#FACC15] uppercase font-bold tracking-widest">Secured via</span>
+                    <span className="text-sm font-bold text-[#1F2933]">Verified Ledger</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Trusted By Section */}
+        <section className="py-12 border-y border-border bg-white">
+          <div className="max-w-7xl mx-auto px-6 text-center">
+            <span className="text-[11px] font-bold tracking-[0.2em] text-[#9CA3AF] uppercase mb-8 block">Trusted by global event leaders</span>
+            <div className="flex flex-wrap items-center justify-center gap-12 md:gap-24 opacity-60">
+              {['FESTIV-X', 'STADIA', 'METACON', 'AetherArena', 'BLOCK-TIK'].map((brand) => (
+                <span key={brand} className="font-headline font-black text-2xl tracking-tighter text-[#1F2933]">{brand}</span>
               ))}
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="section-padding relative">
-        <div className="container mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <span className="text-sm font-semibold text-primary uppercase tracking-wider">Simple & Secure</span>
-            <h2 className="text-3xl md:text-5xl font-bold mt-3 mb-4">How It Works</h2>
-            <p className="text-muted-foreground text-lg max-w-md mx-auto">Three simple steps to fair ticketing</p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {steps.map((step, i) => (
-              <motion.div
-                key={step.num}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
-                className="relative glass-hover rounded-2xl p-8 text-center group"
-              >
-                <span className="text-7xl font-extrabold text-white/[0.03] absolute top-3 right-4 font-mono select-none">
-                  {step.num}
-                </span>
-                <div className="w-14 h-14 rounded-xl gradient-primary-static flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-shadow">
-                  <step.icon className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{step.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="section-padding relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.015] to-transparent" />
-        <div className="container mx-auto px-6 relative">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <span className="text-sm font-semibold text-primary uppercase tracking-wider">Why Choose Us</span>
-            <h2 className="text-3xl md:text-5xl font-bold mt-3 mb-4">Why FairPass?</h2>
-            <p className="text-muted-foreground text-lg max-w-md mx-auto">Built for fans, not bots</p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {features.map((f, i) => (
-              <motion.div
-                key={f.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="glass-hover rounded-2xl p-6 group"
-              >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
-                  <f.icon className={`h-6 w-6 ${f.iconColor}`} />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{f.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="section-padding">
-        <div className="container mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="glass rounded-3xl p-10 md:p-16 text-center relative overflow-hidden"
-          >
-            {/* Background glow */}
-            <div className="absolute inset-0 opacity-[0.06]">
-              <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-primary blur-[100px]" />
-              <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-neon-pink blur-[100px]" />
             </div>
-            <div className="relative z-10">
-              <h2 className="text-3xl md:text-5xl font-bold mb-4">Ready to Experience Fair Ticketing?</h2>
-              <p className="text-muted-foreground text-lg mb-10 max-w-xl mx-auto">
-                Join thousands of fans who trust blockchain-secured tickets.
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section id="features" className="py-32 max-w-7xl mx-auto px-6">
+          <div className="text-center mb-20">
+            <h2 className="font-headline text-4xl lg:text-5xl font-bold mb-6 text-[#1F2933]">Unyielding Security</h2>
+            <p className="text-[#6B7280] max-w-2xl mx-auto font-medium">
+              Built on a foundation of cryptographic proof to ensure every ticket is as unique as the fan holding it.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-white border border-[#E5E7EB] rounded-3xl p-8 hover:shadow-lg transition-all shadow-sm">
+              <div className="w-14 h-14 rounded-2xl bg-[#1BA6A6]/10 border border-[#1BA6A6]/20 flex items-center justify-center mb-6">
+                <FileText className="w-6 h-6 text-[#1BA6A6]" />
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-[#1F2933]">Immutable Verification</h3>
+              <p className="text-[#6B7280] text-sm leading-relaxed">
+                Every ticket is a verified asset on the ledger. Once minted, its ownership history is permanent and unalterable.
               </p>
-              <Button asChild size="lg" className="btn-primary text-lg px-10 h-14 gap-3 rounded-xl">
-                <Link to="/login">
-                  <Wallet className="h-5 w-5" />
-                  Get Started
-                </Link>
-              </Button>
             </div>
-          </motion.div>
-        </div>
-      </section>
+            
+            <div className="bg-white border border-[#E5E7EB] rounded-3xl p-8 hover:shadow-lg transition-all shadow-sm">
+              <div className="w-14 h-14 rounded-2xl bg-[#1BA6A6]/10 border border-[#1BA6A6]/20 flex items-center justify-center mb-6">
+                <Activity className="w-6 h-6 text-[#1BA6A6]" />
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-[#1F2933]">Real-time Fraud Detection</h3>
+              <p className="text-[#6B7280] text-sm leading-relaxed">
+                Instant alerts for duplicate scan attempts and location mismatches. Stop bad actors at the gate before they enter.
+              </p>
+            </div>
+
+            <div className="bg-white border border-[#E5E7EB] rounded-3xl p-8 hover:shadow-lg transition-all shadow-sm">
+              <div className="w-14 h-14 rounded-2xl bg-[#7ED4D4]/10 border border-[#7ED4D4]/20 flex items-center justify-center mb-6">
+                <RefreshCw className="w-6 h-6 text-[#1BA6A6]" />
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-[#1F2933]">Seamless Secondary Market</h3>
+              <p className="text-[#6B7280] text-sm leading-relaxed">
+                Control resale prices and eliminate scalping via smart contracts. Set royalty fees for every peer-to-peer transfer.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Organizer Section */}
+        <section className="py-32 max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+          <div>
+            <h2 className="font-headline text-4xl lg:text-5xl font-bold mb-6 text-[#1F2933]">
+              Designed for <br/>
+              <span className="text-[#1BA6A6]">High-Stakes Organizers</span>
+            </h2>
+            <p className="text-[#6B7280] font-medium mb-8 leading-relaxed max-w-md">
+              Gain full visibility into your event's health. Monitor entry velocity, identify bot behavior, and watch fraud suppression in real-time from a single command center.
+            </p>
+            <ul className="space-y-4">
+              {['Real-time Entry Velocity Tracking', 'Instant Fraud Suppression Alerts', 'Dynamic Revenue Redistribution'].map((item) => (
+                <li key={item} className="flex items-center gap-3 font-medium text-sm text-[#1F2933]">
+                  <CheckCircle2 className="w-5 h-5 text-[#1BA6A6]" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="relative">
+             {/* Mock Dashboard UI */}
+             <div className="bg-white border border-[#E5E7EB] rounded-3xl shadow-2xl overflow-hidden p-6 max-w-lg mx-auto">
+               <div className="flex justify-between items-center mb-8 border-b border-[#E5E7EB] pb-4">
+                 <div className="flex gap-2">
+                   <div className="w-3 h-3 bg-red-500 rounded-full" />
+                   <div className="w-3 h-3 bg-amber-400 rounded-full" />
+                   <div className="w-3 h-3 bg-[#1BA6A6] rounded-full" />
+                 </div>
+                 <div className="flex gap-4 text-[10px] font-bold text-[#9CA3AF] tracking-widest uppercase">
+                   <span>Live</span>
+                   <span>Data</span>
+                   <span>Usage</span>
+                   <span>Admin</span>
+                 </div>
+               </div>
+               
+               <div className="grid grid-cols-2 gap-4 mb-6">
+                 <div className="bg-[#F5F7F8] border border-[#E5E7EB] p-4 rounded-xl">
+                   <span className="text-[10px] text-[#6B7280] uppercase tracking-wider font-bold block mb-2">Entry Velocity</span>
+                   <span className="text-2xl font-headline font-bold text-[#1F2933]">142/min</span>
+                   <div className="w-full h-1 mt-3 bg-[#E5E7EB] rounded-full overflow-hidden">
+                     <div className="h-full bg-[#1BA6A6] w-[70%]" />
+                   </div>
+                 </div>
+                 <div className="bg-[#F5F7F8] border border-[#E5E7EB] p-4 rounded-xl">
+                   <span className="text-[10px] text-red-500 uppercase tracking-wider font-bold block mb-2">Supressed Scans</span>
+                   <span className="text-2xl font-headline font-bold text-red-500">18</span>
+                   <div className="w-full h-1 mt-3 bg-[#E5E7EB] rounded-full overflow-hidden">
+                     <div className="h-full bg-red-500 w-[15%]" />
+                   </div>
+                 </div>
+               </div>
+
+               <div className="space-y-2">
+                 {[
+                   { hash: "0x82...a6c2", status: "VERIFIED" },
+                   { hash: "0x11...72f1", status: "VERIFIED" }
+                 ].map((tx, i) => (
+                   <div key={i} className="flex justify-between items-center bg-[#F5F7F8] border border-[#E5E7EB] p-3 rounded-lg text-xs font-mono">
+                     <span className="text-[#6B7280]">SCAN: {tx.hash}</span>
+                     <span className="text-[10px] px-2 py-1 bg-[#1BA6A6]/10 text-[#1BA6A6] rounded font-bold">{tx.status}</span>
+                   </div>
+                 ))}
+               </div>
+             </div>
+          </div>
+        </section>
+
+        {/* Testimonial */}
+        <section className="py-32 max-w-4xl mx-auto px-6 text-center">
+          <div className="text-[#1BA6A6] text-6xl font-serif mb-8 opacity-30">"</div>
+          <h2 className="text-2xl md:text-4xl font-headline font-medium leading-relaxed mb-12 italic text-[#1F2933]">
+            Implementing TicketShield wasn't just a technology upgrade; it was an existential shift. For the first time in a decade, we finished an opening night with zero fraudulent entry disputes.
+          </h2>
+          <div className="flex items-center justify-center gap-4">
+            <div className="w-12 h-12 rounded-full overflow-hidden border border-[#E5E7EB] shadow-sm">
+              <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop" alt="Marcus Thorne" className="w-full h-full object-cover" />
+            </div>
+            <div className="text-left">
+              <div className="font-bold text-sm text-[#1F2933]">Marcus Thorne</div>
+              <div className="text-xs text-[#6B7280]">Director, Global Octaves Music Festival</div>
+            </div>
+          </div>
+        </section>
+      </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.06] py-8">
-        <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-md gradient-primary-static flex items-center justify-center">
-              <span className="text-white font-bold text-[10px]">FP</span>
+      <footer className="border-t border-[#E5E7EB] bg-white py-16">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+          <div className="md:col-span-2 space-y-6">
+            <div className="flex items-center gap-2">
+              <Shield className="w-6 h-6 text-[#1BA6A6]" />
+              <span className="font-headline font-bold text-lg tracking-tight text-[#1F2933]">TicketShield</span>
             </div>
-            <span className="font-semibold gradient-text">FairPass</span>
+            <p className="text-xs text-[#6B7280] leading-relaxed max-w-xs">
+              The world's most secure digital ticketing infrastructure. Powered by Ethereum and protected by Aether Shield technology.
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">© 2026 FairPass. Decentralized ticketing for everyone.</p>
+          
+          <div>
+            <h4 className="font-bold text-xs uppercase tracking-widest text-[#1F2933] mb-6">Platform</h4>
+            <ul className="space-y-4 text-sm text-[#6B7280] font-medium">
+              <li><a href="#" className="hover:text-[#1BA6A6] transition-colors">Features</a></li>
+              <li><a href="#" className="hover:text-[#1BA6A6] transition-colors">Security</a></li>
+              <li><a href="#" className="hover:text-[#1BA6A6] transition-colors">Ledger Stats</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-bold text-xs uppercase tracking-widest text-[#1F2933] mb-6">Company</h4>
+            <ul className="space-y-4 text-sm text-[#6B7280] font-medium">
+              <li><a href="#" className="hover:text-[#1BA6A6] transition-colors">About</a></li>
+              <li><a href="#" className="hover:text-[#1BA6A6] transition-colors">Contact</a></li>
+              <li><a href="#" className="hover:text-[#1BA6A6] transition-colors">Partners</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-[#E5E7EB] flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-[10px] text-[#9CA3AF] font-medium tracking-wide">
+            © 2026 TICKETSHIELD INC. <span className="mx-2">·</span> PRIVACY <span className="mx-2">·</span> TERMS
+          </p>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#1BA6A6]/20 bg-[#1BA6A6]/5">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#1BA6A6]" />
+            <span className="text-[10px] font-bold text-[#1BA6A6] uppercase tracking-widest">System Info Operational</span>
+          </div>
         </div>
       </footer>
     </div>
   );
-};
-
-export default Index;
+}

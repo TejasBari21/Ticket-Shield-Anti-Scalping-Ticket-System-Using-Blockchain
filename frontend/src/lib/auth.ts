@@ -6,7 +6,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-const ADMIN_EMAIL = (import.meta as any).env.VITE_ADMIN_EMAIL as string ?? "adminfairpass@gmail.com";
+const ADMIN_EMAIL = (import.meta as any).env.VITE_ADMIN_EMAIL as string ?? "adminticketshield@gmail.com";
 
 export interface AuthUser {
   id: string;

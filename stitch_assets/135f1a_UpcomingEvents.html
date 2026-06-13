@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TicketShield - Events</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-container": "#d6a9ff",
+                        "secondary-fixed-dim": "#ddb7ff",
+                        "primary-fixed-dim": "#cbbeff",
+                        "on-secondary-fixed": "#2c0051",
+                        "tertiary-fixed": "#63f7ff",
+                        "surface-variant": "#343440",
+                        "tertiary": "#00dce5",
+                        "inverse-surface": "#e3e0f1",
+                        "inverse-primary": "#632ef6",
+                        "surface-container-low": "#1b1a26",
+                        "outline-variant": "#484456",
+                        "surface-container-lowest": "#0d0d18",
+                        "secondary-fixed": "#f0dbff",
+                        "primary-fixed": "#e6deff",
+                        "inverse-on-surface": "#302f3b",
+                        "on-tertiary": "#003739",
+                        "error-container": "#93000a",
+                        "tertiary-container": "#007378",
+                        "on-primary-fixed-variant": "#4b00d4",
+                        "on-tertiary-fixed": "#002021",
+                        "outline": "#938ea2",
+                        "primary": "#cbbeff",
+                        "surface-tint": "#cbbeff",
+                        "secondary-container": "#6f00be",
+                        "primary-container": "#6c3bff",
+                        "on-surface": "#e3e0f1",
+                        "surface-dim": "#12121d",
+                        "on-secondary-fixed-variant": "#6900b3",
+                        "on-secondary": "#490080",
+                        "tertiary-fixed-dim": "#00dce5",
+                        "surface-container-high": "#292935",
+                        "on-error-container": "#ffdad6",
+                        "background": "#0d0d18",
+                        "on-background": "#e3e0f1",
+                        "on-error": "#690005",
+                        "error": "#ffb4ab",
+                        "surface": "#12121d",
+                        "on-tertiary-container": "#87f8ff",
+                        "on-surface-variant": "#cac3d9",
+                        "on-primary": "#330098",
+                        "surface-container-highest": "#343440",
+                        "surface-container": "#1f1e2a",
+                        "on-primary-fixed": "#1d0061",
+                        "surface-bright": "#383845",
+                        "secondary": "#ddb7ff",
+                        "on-primary-container": "#eae2ff",
+                        "on-tertiary-fixed-variant": "#004f53"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.75rem",
+                        "2xl": "2.25rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body { 
+                @apply bg-surface-container-lowest text-on-surface font-body; 
+                -webkit-font-smoothing: antialiased;
+            }
+        }
+        .glass-nav {
+            background: rgba(13, 13, 24, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .ios-search-shadow {
+            box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.3);
+        }
+        .card-shimmer {
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #6c3bff 0%, #a855f7 100%);
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .transition-premium {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen">
+<header class="fixed top-0 left-0 right-0 z-50 glass-nav h-16 flex items-center justify-between px-6 border-b border-white/5">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden ring-1 ring-white/10">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmZB34s3WYoN8Xx-Ug_sQBvgldkROf6sKibXhGMZKzbtd-xOfKoHNOYGxzSvA3mRy8BX3IvzcLdS6jWBbSS26ZIzcR5cYS6nvXChqUKZmiIC8cg-bYXHOHMxTRIBcGzjpuK4ZekrCC7dVF7PMoVE3AqotPb1gfJfNQ6Mt_Cc95AgUge-273LmKRurNIXb09qwyzM_9qUv8KG9-DQ1KJcOCVgFjxy7bflF5ZDNnk28p7OuBXwD4-Qo0mtIwFYy1En2sQ6KQHAqrkx0"/>
+</div>
+<span class="font-headline font-extrabold text-lg tracking-tight bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">TicketShield</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full active:bg-white/5 transition-premium">
+<span class="material-symbols-outlined text-[22px]">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full active:bg-white/5 transition-premium">
+<span class="material-symbols-outlined text-[22px]">settings</span>
+</button>
+</div>
+</header>
+<main class="pt-20 pb-32 max-w-lg mx-auto px-5">
+<div class="mt-4 mb-10">
+<div class="flex items-center justify-between mb-6">
+<h1 class="font-headline text-3xl font-extrabold tracking-tight">Explore</h1>
+<div class="flex items-center gap-1 text-primary text-sm font-semibold">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+<span>London</span>
+</div>
+</div>
+<div class="relative group mb-6">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant/60 text-[20px]">search</span>
+</div>
+<input class="w-full h-12 bg-surface-container-high/50 border border-white/5 rounded-2xl pl-11 pr-4 text-on-surface placeholder-on-surface-variant/50 focus:ring-2 focus:ring-primary/30 transition-premium ios-search-shadow" placeholder="Artists, shows, venues..." type="text"/>
+</div>
+<div class="flex gap-2.5 overflow-x-auto hide-scrollbar -mx-5 px-5">
+<button class="px-6 py-2.5 rounded-full bg-primary text-on-primary-fixed font-bold text-sm transition-premium shadow-lg shadow-primary/20">All</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high border border-white/5 text-on-surface-variant font-semibold text-sm transition-premium whitespace-nowrap active:bg-surface-variant">Concerts</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high border border-white/5 text-on-surface-variant font-semibold text-sm transition-premium whitespace-nowrap active:bg-surface-variant">Sports</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high border border-white/5 text-on-surface-variant font-semibold text-sm transition-premium whitespace-nowrap active:bg-surface-variant">Theater</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high border border-white/5 text-on-surface-variant font-semibold text-sm transition-premium whitespace-nowrap active:bg-surface-variant">More</button>
+</div>
+</div>
+<div class="mb-12">
+<div class="flex items-center justify-between mb-5">
+<h2 class="font-headline text-xl font-bold tracking-tight">Hot Trends</h2>
+<button class="text-xs font-bold text-primary tracking-widest uppercase">View All</button>
+</div>
+<div class="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl group active:scale-[0.98] transition-premium">
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsWe_ShXN1Nvh_xxeefv4nMHXFISyUA3YMKzjNxK9acqkvFSjgGun2_Dt9UKW07_6wWWQk3ZcpfsddgH1osVyTMBqw41JKr9khvz1HR-ccWT4Li3aLP6G3gf5lwR39J9OWZ3uqJTwvkBiZp-8M2jiw2Ryh8vFUGn1jF1aFwBAjAev4HzQS4Rs_FU4E0cMewybO5_LqnbNhZAazY1wwITknCDrP0zCLH9LcyJe3oil7nMKnGbXVWcpmA2fjy-bcqkSCNfI0kBeEG0Y"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
+<div class="absolute inset-0 card-shimmer border border-white/10 rounded-3xl pointer-events-none"></div>
+<div class="absolute bottom-0 left-0 p-7 w-full">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 mb-3.5">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+<span class="text-[10px] font-black text-white uppercase tracking-widest">Trending Now</span>
+</div>
+<h3 class="font-headline text-3xl font-extrabold text-white leading-[1.1] mb-3">Neon Paradox:<br/>World Tour 2024</h3>
+<div class="flex items-center gap-4 text-white/70 text-sm font-medium mb-6">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+<span>Aug 24</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span>O2 Arena</span>
+</div>
+</div>
+<button class="w-full h-14 primary-gradient text-white font-bold rounded-2xl shadow-xl shadow-primary/20 flex items-center justify-center gap-2 group-active:opacity-90 transition-premium">
+                    Get Tickets
+                    <span class="material-symbols-outlined text-[20px] transition-transform group-hover:translate-x-1">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<section>
+<div class="flex items-center justify-between mb-6">
+<h2 class="font-headline text-xl font-bold tracking-tight">Handpicked for You</h2>
+<span class="text-on-surface-variant/60 text-xs font-medium">128 available</span>
+</div>
+<div class="space-y-6">
+<div class="bg-surface-container/30 rounded-[2rem] overflow-hidden border border-white/5 transition-premium active:scale-[0.98] group">
+<div class="relative h-56 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBc-w3tOD-IcnzDr26Aj7TJMOESJfsFfYA5dP-xku4uz03su9yH34P5-d1a1w6CWOCbmcDYUsN4fkKE3qsQAXLz37BrLc_jYbqJQsfKxz6dv-s5beEi9mXfSDGK5FDiIYiHTUTseLeFoBp53prilAl23HO1YENoyAmttbA54WxcH83hk-DhTkB6ZMJrLW_prEZj7RX6eK-xaDIbrEhpHly7K40_ZQtzDkgBQrZYq4BB_dZjWvKwAA1dtkl9qDpOxRx7fMjrJycYTJc"/>
+<div class="absolute top-4 left-4 bg-black/40 backdrop-blur-xl px-3 py-1.5 rounded-2xl border border-white/20 flex flex-col items-center min-w-[56px]">
+<span class="text-[10px] text-primary-fixed font-black uppercase tracking-tighter">Jun</span>
+<span class="text-xl font-headline font-extrabold text-white">24</span>
+</div>
+<div class="absolute top-4 right-4 bg-tertiary/10 backdrop-blur-md border border-tertiary/30 px-3 py-1 rounded-full flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-tertiary" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="text-[9px] font-black text-tertiary uppercase tracking-widest">Secured</span>
+</div>
+</div>
+<div class="p-6">
+<h3 class="font-headline text-xl font-extrabold text-on-surface mb-2">The Decentralized Summit</h3>
+<div class="flex items-center gap-4 text-on-surface-variant text-xs font-medium mb-5">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span>Nexus Arena, Zurich</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span>09:00 AM</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">From</span>
+<span class="font-headline text-lg font-extrabold text-on-surface">0.45 ETH</span>
+</div>
+<button class="px-7 py-3 bg-white text-black font-bold text-sm rounded-xl transition-premium active:scale-95">View Details</button>
+</div>
+</div>
+</div>
+<div class="bg-surface-container/30 rounded-[2rem] overflow-hidden border border-white/5 transition-premium active:scale-[0.98] group">
+<div class="relative h-56 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAD573RR9sVm8gZid3cfux1Uw7zz6nQWt5xRzs9--1jQREsWgVx4vIiQknBP0MLgBK_qG5o9y8xt_6GoJAKMa244u3PovOEqOo4IhZQ2wXO9ff6sJBy7PLfOHa-wcPjonMX2DCh6kKFYBn7XWaRsOwr8nikCNE3yAB_QF7D6Z2EWMaSrZi8tjjecInzrajmj2DXvAq2lsxsdNhLoDhzyPFw8H5vaDdabxrjNFykPCVL_yOpQJOaNKmgy4w9Ye8e3OofuWkSo7MZBPc"/>
+<div class="absolute top-4 left-4 bg-black/40 backdrop-blur-xl px-3 py-1.5 rounded-2xl border border-white/20 flex flex-col items-center min-w-[56px]">
+<span class="text-[10px] text-primary-fixed font-black uppercase tracking-tighter">Jul</span>
+<span class="text-xl font-headline font-extrabold text-white">08</span>
+</div>
+<div class="absolute top-4 right-4 bg-error/10 backdrop-blur-md border border-error/30 px-3 py-1 rounded-full">
+<span class="text-[9px] font-black text-error uppercase tracking-widest">Selling Fast</span>
+</div>
+</div>
+<div class="p-6">
+<h3 class="font-headline text-xl font-extrabold text-on-surface mb-2">Echoes of Midnight Jazz</h3>
+<div class="flex items-center gap-4 text-on-surface-variant text-xs font-medium mb-5">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span>Blue Note, Paris</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span>10:30 PM</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">From</span>
+<span class="font-headline text-lg font-extrabold text-on-surface">85.00 EUR</span>
+</div>
+<button class="px-7 py-3 bg-white text-black font-bold text-sm rounded-xl transition-premium active:scale-95">View Details</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 z-50 glass-nav h-20 flex items-center justify-around px-4 border-t border-white/5 pb-2">
+<button class="flex flex-col items-center gap-1 px-3 text-on-surface-variant/50 active:scale-95 transition-premium">
+<span class="material-symbols-outlined text-[24px]">explore</span>
+<span class="text-[10px] font-bold font-label tracking-wide">Explore</span>
+</button>
+<button class="flex flex-col items-center gap-1 px-3 text-on-surface-variant/50 active:scale-95 transition-premium">
+<span class="material-symbols-outlined text-[24px]">confirmation_number</span>
+<span class="text-[10px] font-bold font-label tracking-wide">Tickets</span>
+</button>
+<div class="relative -top-3">
+<button class="w-14 h-14 rounded-2xl primary-gradient shadow-2xl shadow-primary/40 flex items-center justify-center ring-4 ring-surface-container-lowest active:scale-90 transition-premium">
+<span class="material-symbols-outlined text-white text-[28px]">qr_code_scanner</span>
+</button>
+</div>
+<button class="flex flex-col items-center gap-1 px-3 text-primary active:scale-95 transition-premium">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<span class="text-[10px] font-bold font-label tracking-wide">Saved</span>
+</button>
+<button class="flex flex-col items-center gap-1 px-3 text-on-surface-variant/50 active:scale-95 transition-premium">
+<span class="material-symbols-outlined text-[24px]">person_outline</span>
+<span class="text-[10px] font-bold font-label tracking-wide">Profile</span>
+</button>
+</nav>
+
+</body></html>

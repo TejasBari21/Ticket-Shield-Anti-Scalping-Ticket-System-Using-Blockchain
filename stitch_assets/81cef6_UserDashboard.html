@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TicketShield Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-container": "#d6a9ff",
+                        "secondary-fixed-dim": "#ddb7ff",
+                        "primary-fixed-dim": "#cbbeff",
+                        "on-secondary-fixed": "#2c0051",
+                        "tertiary-fixed": "#63f7ff",
+                        "surface-variant": "#343440",
+                        "tertiary": "#00dce5",
+                        "inverse-surface": "#e3e0f1",
+                        "inverse-primary": "#632ef6",
+                        "surface-container-low": "#1b1a26",
+                        "outline-variant": "#484456",
+                        "surface-container-lowest": "#0d0d18",
+                        "secondary-fixed": "#f0dbff",
+                        "primary-fixed": "#e6deff",
+                        "inverse-on-surface": "#302f3b",
+                        "on-tertiary": "#003739",
+                        "error-container": "#93000a",
+                        "tertiary-container": "#007378",
+                        "on-primary-fixed-variant": "#4b00d4",
+                        "on-tertiary-fixed": "#002021",
+                        "outline": "#938ea2",
+                        "primary": "#cbbeff",
+                        "surface-tint": "#cbbeff",
+                        "secondary-container": "#6f00be",
+                        "primary-container": "#6c3bff",
+                        "on-surface": "#e3e0f1",
+                        "surface-dim": "#12121d",
+                        "on-secondary-fixed-variant": "#6900b3",
+                        "on-secondary": "#490080",
+                        "tertiary-fixed-dim": "#00dce5",
+                        "surface-container-high": "#292935",
+                        "on-error-container": "#ffdad6",
+                        "background": "#12121d",
+                        "on-background": "#e3e0f1",
+                        "on-error": "#690005",
+                        "error": "#ffb4ab",
+                        "surface": "#12121d",
+                        "on-tertiary-container": "#87f8ff",
+                        "on-surface-variant": "#cac3d9",
+                        "on-primary": "#330098",
+                        "surface-container-highest": "#343440",
+                        "surface-container": "#1f1e2a",
+                        "on-primary-fixed": "#1d0061",
+                        "surface-bright": "#383845",
+                        "secondary": "#ddb7ff",
+                        "on-primary-container": "#eae2ff",
+                        "on-tertiary-fixed-variant": "#004f53"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "2rem",
+                        "2xl": "2.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply bg-[#0d0d18] text-[#e3e0f1] font-body antialiased selection:bg-primary/30;
+                min-height: 100dvh;
+            }
+        }
+        .glass-card {
+            background: linear-gradient(145deg, rgba(31, 30, 42, 0.7) 0%, rgba(18, 18, 29, 0.8) 100%);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+        .sovereign-gradient {
+            background: linear-gradient(135deg, #6c3bff 0%, #a855f7 100%);
+        }
+        .trust-progress {
+            stroke-dasharray: 283;
+            stroke-dashoffset: calc(283 - (283 * 92) / 100);
+            stroke-linecap: round;
+        }
+        .premium-shadow {
+            box-shadow: 0 20px 40px -15px rgba(108, 59, 255, 0.25);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="pb-32">
+<header class="sticky top-0 z-50 bg-[#0d0d18]/80 backdrop-blur-xl px-6 py-4 flex items-center justify-between border-b border-white/5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl sovereign-gradient flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-white text-2xl font-bold">shield</span>
+</div>
+<div>
+<h1 class="font-headline font-extrabold text-lg tracking-tight leading-none text-on-surface">TicketShield</h1>
+<span class="text-[10px] uppercase tracking-[0.2em] text-primary/70 font-bold">Vault Protocol</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:bg-surface-variant transition-colors border border-white/5">
+<span class="material-symbols-outlined text-on-surface-variant text-xl">notifications</span>
+</button>
+<div class="w-10 h-10 rounded-full border-2 border-primary/30 p-0.5">
+<img alt="Profile" class="w-full h-full rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_Ge5K58UEVR8y4VjW7Hqr1l9mlwc8I9oahJ6C_CLe6-MzKl_wLbR9g2SD11RtV30RY6WdJqT5vCgXkOiueViLLwsBnAw_McaZki8wLkEvtXiQuDP8i2mQHfPnzgiV-y6NgrmDqkrlujCA9TtLl_u8zLKLFOIItax1tJmUejow2PXLpks6ZWx1VJf29Nbo9F7q3ohy1zjnGbV2PE4_39xvDK7EOssSWe8QOpNwaYLePE01iumCFa31XYz6HPf_RqXfJojTV9Yl7Ac"/>
+</div>
+</div>
+</header>
+<main class="px-5 pt-8 space-y-10">
+<section class="space-y-1">
+<p class="text-on-surface-variant font-medium text-sm">Welcome back,</p>
+<h2 class="font-headline text-3xl font-extrabold text-on-surface tracking-tight">Alex Sterling</h2>
+</section>
+<section class="grid grid-cols-1 gap-4">
+<div class="grid grid-cols-2 gap-4">
+<div class="glass-card p-5 rounded-2xl border-l-4 border-l-primary flex flex-col justify-between aspect-square">
+<div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">confirmation_number</span>
+</div>
+<div>
+<span class="text-on-surface font-headline text-3xl font-extrabold">04</span>
+<p class="text-on-surface-variant text-xs font-medium uppercase tracking-wider mt-1">Active Tickets</p>
+</div>
+</div>
+<div class="glass-card p-5 rounded-2xl border-l-4 border-l-tertiary flex flex-col justify-between aspect-square">
+<div class="w-10 h-10 rounded-xl bg-tertiary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary">verified</span>
+</div>
+<div>
+<span class="text-on-surface font-headline text-3xl font-extrabold">28</span>
+<p class="text-on-surface-variant text-xs font-medium uppercase tracking-wider mt-1">Events Attended</p>
+</div>
+</div>
+</div>
+<div class="glass-card p-6 rounded-2xl flex items-center justify-between relative overflow-hidden">
+<div class="absolute -right-4 -top-4 w-32 h-32 bg-tertiary/5 blur-3xl rounded-full"></div>
+<div class="flex items-center gap-6">
+<div class="relative w-20 h-20 flex items-center justify-center">
+<svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+<circle class="text-white/5" cx="50" cy="50" fill="transparent" r="45" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-tertiary trust-progress" cx="50" cy="50" fill="transparent" r="45" stroke="currentColor" stroke-width="8"></circle>
+</svg>
+<div class="flex flex-col items-center">
+<span class="font-headline text-xl font-extrabold text-on-surface">92</span>
+</div>
+</div>
+<div class="space-y-1">
+<h3 class="font-headline font-bold text-lg leading-tight">Trust Score</h3>
+<p class="text-on-surface-variant text-xs">Level: <span class="text-tertiary font-bold">Sovereign Elite</span></p>
+<div class="flex items-center gap-1.5 mt-2">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Verified Human</span>
+</div>
+</div>
+</div>
+<button class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all border border-white/5">
+<span class="material-symbols-outlined text-sm">info</span>
+</button>
+</div>
+</section>
+<section class="grid grid-cols-2 gap-4">
+<div class="col-span-2 sovereign-gradient p-7 rounded-2xl premium-shadow relative overflow-hidden group">
+<div class="absolute right-[-10%] top-[-20%] w-48 h-48 bg-white/20 rounded-full blur-3xl"></div>
+<div class="relative z-10 flex flex-col justify-between h-full min-h-[140px]">
+<div>
+<h2 class="font-headline text-2xl font-extrabold text-white leading-tight">Scan &amp; Verify</h2>
+<p class="text-white/80 text-xs mt-2 max-w-[200px]">Instant entry to blockchain-secured venues.</p>
+</div>
+<div class="flex justify-between items-end">
+<div class="px-4 py-2 bg-white/20 backdrop-blur-md rounded-xl border border-white/30 text-white font-bold text-sm">
+                            Open Scanner
+                        </div>
+<div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-primary-container text-2xl">qr_code_scanner</span>
+</div>
+</div>
+</div>
+</div>
+<div class="glass-card p-6 rounded-2xl flex flex-col justify-between min-h-[160px] border-b-2 border-b-primary/40">
+<div class="space-y-2">
+<div class="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">style</span>
+</div>
+<h2 class="font-headline text-lg font-bold text-on-surface">My Assets</h2>
+</div>
+<div class="flex items-center justify-between pt-4">
+<div class="flex -space-x-3">
+<div class="w-8 h-8 rounded-lg border-2 border-[#12121d] overflow-hidden bg-surface-variant">
+<img alt="Event" class="w-full h-full object-cover grayscale-[50%]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZJeIkPrnGbCPG_TLTCm8Ispf2J-6FNfA801eEd-ou7MR2CfudtfVE37-6kxSfgGjwmc3xR2HJNYGhY0bB37pwjvbI2npOmLdh3lmdw9vmRMdcZeZuwklZJlXzvxg922kNRp3TP0nlF6OnGlKZQCmiI7vbrow9IZIYRlIIOgpKq-xi06fpD_f_eRYPQkeDQGXFKNLk8Rf8Rqr2ue5S-eY109j_-rnhzSAHeaCNI7mN5nANUMijI0mM9UVSl0-Ry80acclh7R7VuJk"/>
+</div>
+<div class="w-8 h-8 rounded-lg border-2 border-[#12121d] overflow-hidden bg-surface-variant text-[10px] flex items-center justify-center font-bold text-primary">+3</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">arrow_forward_ios</span>
+</div>
+</div>
+<div class="glass-card p-6 rounded-2xl flex flex-col justify-between min-h-[160px] border-b-2 border-b-secondary/40">
+<div class="space-y-2">
+<div class="w-8 h-8 rounded-lg bg-secondary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-xl">explore</span>
+</div>
+<h2 class="font-headline text-lg font-bold text-on-surface">Discover</h2>
+</div>
+<div class="flex items-center justify-between pt-4">
+<p class="text-[10px] font-bold uppercase tracking-wider text-secondary">New Drops</p>
+<span class="material-symbols-outlined text-on-surface-variant">arrow_forward_ios</span>
+</div>
+</div>
+</section>
+<section class="space-y-6 pb-12">
+<div class="flex items-end justify-between px-1">
+<div>
+<h3 class="font-headline text-2xl font-extrabold tracking-tight">Main Event</h3>
+<p class="text-on-surface-variant text-xs mt-1">Starting in 2 hours</p>
+</div>
+<button class="text-primary text-xs font-bold uppercase tracking-widest hover:opacity-70 transition-opacity">View All</button>
+</div>
+<div class="relative glass-card rounded-[2.5rem] overflow-hidden group">
+<div class="aspect-[4/5] relative">
+<img alt="Featured Event" class="w-full h-full object-cover scale-105 group-hover:scale-110 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOfcIYF95dhzWer95m-aJeRDRJ1OWmhGCsrDy2I_qVn5cqnHm8h1NvMPz6ZXUQ5rrZ9olrK3xfmnF5eVJimlKYdn4rN62xVM-qkDuVa4LuH-43dIKdIsIwodJg7pM4acl4ChSNq45NWKI74FMN5ldvcxVRCU-0EOZtIoBSuPFe274J-n-pRd-aeIvMOb6GRGf4pkYI6k73lmqfIdBMrJldrd0PKQVO7NCpuIrUvlZ1cTlk3S1ZQaD7aPhfpF7_OYYC4b7riPxlT4Y"/>
+<div class="absolute inset-0 bg-gradient-to-t from-[#0d0d18] via-[#0d0d18]/40 to-transparent"></div>
+<div class="absolute inset-x-0 bottom-0 p-8 space-y-6">
+<div class="flex gap-2">
+<span class="px-3 py-1 rounded-full bg-secondary text-on-secondary text-[10px] font-black tracking-widest uppercase">VIP</span>
+<span class="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-white text-[10px] font-black tracking-widest uppercase border border-white/20">NFT Secured</span>
+</div>
+<div>
+<h4 class="font-headline text-4xl font-extrabold tracking-tighter text-white leading-[0.9]">Neon<br/>Horizon</h4>
+<p class="text-white/60 text-sm mt-3 font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">location_on</span>
+                                The Grid, District 7
+                            </p>
+</div>
+<div class="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+<div>
+<p class="text-white/40 text-[10px] font-bold uppercase tracking-widest">Access Code</p>
+<p class="text-white font-mono text-sm mt-1 tracking-wider">T-7882-X991</p>
+</div>
+<div class="flex justify-end">
+<div class="bg-white p-2.5 rounded-xl shadow-xl">
+<span class="material-symbols-outlined text-black text-3xl">qr_code_2</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 z-[100] px-4 pb-8 pt-4">
+<div class="max-w-md mx-auto bg-[#1b1a26]/90 backdrop-blur-2xl rounded-[2rem] p-2 flex items-center justify-between border border-white/10 shadow-2xl">
+<a class="flex flex-col items-center justify-center w-14 h-14 rounded-2xl text-primary transition-all bg-primary/10" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+</a>
+<a class="flex flex-col items-center justify-center w-14 h-14 rounded-2xl text-on-surface-variant hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">confirmation_number</span>
+</a>
+<div class="relative -mt-16">
+<button class="w-16 h-16 sovereign-gradient rounded-full flex items-center justify-center shadow-2xl ring-4 ring-[#0d0d18] text-white">
+<span class="material-symbols-outlined text-3xl">qr_code_scanner</span>
+</button>
+</div>
+<a class="flex flex-col items-center justify-center w-14 h-14 rounded-2xl text-on-surface-variant hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">explore</span>
+</a>
+<a class="flex flex-col items-center justify-center w-14 h-14 rounded-2xl text-on-surface-variant hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">person</span>
+</a>
+</div>
+</nav>
+
+</body></html>

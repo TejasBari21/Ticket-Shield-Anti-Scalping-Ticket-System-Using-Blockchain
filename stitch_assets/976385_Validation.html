@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-container": "#d6a9ff",
+              "secondary-fixed-dim": "#ddb7ff",
+              "primary-fixed-dim": "#cbbeff",
+              "on-secondary-fixed": "#2c0051",
+              "tertiary-fixed": "#63f7ff",
+              "surface-variant": "#343440",
+              "tertiary": "#00dce5",
+              "inverse-surface": "#e3e0f1",
+              "inverse-primary": "#632ef6",
+              "surface-container-low": "#1b1a26",
+              "outline-variant": "#484456",
+              "surface-container-lowest": "#0d0d18",
+              "secondary-fixed": "#f0dbff",
+              "primary-fixed": "#e6deff",
+              "inverse-on-surface": "#302f3b",
+              "on-tertiary": "#003739",
+              "error-container": "#93000a",
+              "tertiary-container": "#007378",
+              "on-primary-fixed-variant": "#4b00d4",
+              "on-tertiary-fixed": "#002021",
+              "outline": "#938ea2",
+              "primary": "#cbbeff",
+              "surface-tint": "#cbbeff",
+              "secondary-container": "#6f00be",
+              "primary-container": "#6c3bff",
+              "on-surface": "#e3e0f1",
+              "surface-dim": "#12121d",
+              "on-secondary-fixed-variant": "#6900b3",
+              "on-secondary": "#490080",
+              "tertiary-fixed-dim": "#00dce5",
+              "surface-container-high": "#292935",
+              "on-error-container": "#ffdad6",
+              "background": "#12121d",
+              "on-background": "#e3e0f1",
+              "on-error": "#690005",
+              "error": "#ffb4ab",
+              "surface": "#12121d",
+              "on-tertiary-container": "#87f8ff",
+              "on-surface-variant": "#cac3d9",
+              "on-primary": "#330098",
+              "surface-container-highest": "#343440",
+              "surface-container": "#1f1e2a",
+              "on-primary-fixed": "#1d0061",
+              "surface-bright": "#383845",
+              "secondary": "#ddb7ff",
+              "on-primary-container": "#eae2ff",
+              "on-tertiary-fixed-variant": "#004f53"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0d0d18;
+            color: #e3e0f1;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(56, 56, 69, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(72, 68, 86, 0.15);
+        }
+        .premium-gradient {
+            background: linear-gradient(135deg, #6c3bff 0%, #ddb7ff 100%);
+        }
+        .success-glow {
+            box-shadow: 0 0 40px 0 rgba(0, 220, 229, 0.15);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col">
+<!-- Top Bar -->
+<header class="sticky top-0 z-50 px-6 py-4 flex items-center justify-between bg-surface-dim/80 backdrop-blur-md">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="User avatar profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARfzDLHDEaEH-nNrygHBM3RkzxGn1VBJCHdwCi7xusPgD23ce89Dl549iG2Hdvwc4XxE2WjgaS4MKMA-g48ioAyDpUGy6dCQSKaaaUaRPAoq6mXskWMaTZw-dMvOcEcWvU0NyqRqCGqlcvrzTB-elvUO4RX6SsIijJZQfcHgMj0xMtFQuqGsz-ug9tqsMF-39HnRTlng3pMfqo3XGTXn632DZvPsYIvRny7svpnc7FLkz0DfeKnsCFPUc-qJXAOmI8UgJ4rp4dvCM"/>
+</div>
+<h1 class="font-headline font-extrabold text-xl tracking-tight text-on-surface">TicketShield</h1>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<!-- Main Content: Linear Validation Flow (Focus State) -->
+<main class="flex-grow flex items-center justify-center p-6 bg-surface-container-lowest relative overflow-hidden">
+<!-- Background Ambient Glows -->
+<div class="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] bg-primary-container/10 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[300px] h-[300px] bg-tertiary/10 rounded-full blur-[100px]"></div>
+<div class="w-full max-w-md flex flex-col items-center">
+<!-- Status Indicator Section -->
+<div class="mb-12 text-center">
+<div class="relative inline-block mb-6">
+<!-- Success Ring -->
+<div class="w-28 h-28 rounded-full border-4 border-tertiary/20 flex items-center justify-center">
+<div class="w-20 h-20 rounded-full bg-tertiary-container/30 flex items-center justify-center text-tertiary success-glow">
+<span class="material-symbols-outlined !text-5xl" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+</div>
+</div>
+<div class="space-y-1">
+<p class="font-label text-xs uppercase tracking-[0.2em] text-tertiary font-bold">Verification Complete</p>
+<h2 class="font-headline font-extrabold text-4xl text-on-surface">Ticket Valid</h2>
+</div>
+</div>
+<!-- The Sovereign Card (Ticket Asset) -->
+<div class="w-full glass-panel rounded-xl overflow-hidden relative shadow-2xl">
+<!-- Inner Glow Detail -->
+<div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"></div>
+<div class="p-8">
+<!-- Event Metadata -->
+<div class="flex justify-between items-start mb-10">
+<div class="space-y-1">
+<span class="px-2.5 py-1 rounded-full bg-tertiary-container/20 text-tertiary text-[10px] font-bold uppercase tracking-wider">Confirmed</span>
+<h3 class="font-headline font-bold text-2xl text-on-surface leading-tight mt-2">After Hours: Neon Nights</h3>
+</div>
+<div class="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="confirmation_number">confirmation_number</span>
+</div>
+</div>
+<!-- Layout Details: Asymmetric Grid -->
+<div class="grid grid-cols-2 gap-y-8 gap-x-4 mb-10">
+<div class="flex flex-col">
+<label class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Ticket ID</label>
+<p class="font-body font-semibold text-on-surface">#TS-992-8812</p>
+</div>
+<div class="flex flex-col">
+<label class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Seat Number</label>
+<p class="font-body font-semibold text-on-surface">Floor 2, Row G-14</p>
+</div>
+<div class="flex flex-col col-span-2">
+<label class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Owner Name</label>
+<div class="flex items-center gap-2">
+<p class="font-body font-semibold text-on-surface">Julian A. Sterling</p>
+<span class="material-symbols-outlined text-tertiary !text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+</div>
+<!-- Action Area -->
+<div class="pt-8 border-t border-outline-variant/20 flex flex-col gap-4">
+<button class="premium-gradient w-full py-4 rounded-xl font-headline font-bold text-on-primary-fixed shadow-lg shadow-primary-container/20 flex items-center justify-center gap-2">
+<span>Grant Access</span>
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<button class="w-full py-4 rounded-xl font-headline font-semibold text-on-surface-variant glass-panel border-none hover:bg-surface-container-highest transition-colors">
+                            Print Receipt
+                        </button>
+</div>
+</div>
+<!-- Subtle Card Branding -->
+<div class="bg-surface-container-highest/50 px-8 py-3 flex justify-between items-center">
+<span class="font-label text-[10px] text-on-surface-variant/60 uppercase tracking-widest">Sovereign Ledger v2.4</span>
+<div class="flex gap-1">
+<div class="w-1.5 h-1.5 rounded-full bg-tertiary"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-primary"></div>
+</div>
+</div>
+</div>
+<!-- Footer Meta -->
+<p class="mt-8 font-label text-xs text-on-surface-variant/40 text-center max-w-[280px]">
+                Validating on Ethereum Mainnet. Timestamp: 2023-11-24 14:02:11 GMT
+            </p>
+</div>
+</main>
+<!-- Navigation is hidden for this specific linear validation process to ensure 100% focus on the result. -->
+</body></html>
